@@ -1,0 +1,5 @@
+_config_dataverseTest.json
+_config_DvApi.json
+.ipynb_checkpoints/
+__pycache__/
+uploads/
