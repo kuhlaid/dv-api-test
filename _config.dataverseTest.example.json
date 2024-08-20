@@ -4,7 +4,7 @@
   "strLOCAL_UPLOAD_DIR": "/uploads",
   "lstTEST_FILES": [
     {
-      "name": "sampleFile.txt",
+      "strFileName": "sampleFile.txt",
       "type": "application/octet-stream",
       "strDataDescription": "First testing file",
       "strDirectoryLabel": "data/testing",
@@ -14,7 +14,7 @@
       ]
     },
     {
-      "name": "sampleFile.json",
+      "strFileName": "sampleFile.json",
       "type": "application/octet-stream",
       "strDataDescription": "Second testing JSON file",
       "strDirectoryLabel": "data/testing",
@@ -24,7 +24,7 @@
       ]
     },
     {
-      "name": "sampleFile.csv",
+      "strFileName": "sampleFile.csv",
       "blnJsonToCsv": "true",
       "type": "application/octet-stream",
       "strDataDescription": "First CSV file",
@@ -35,8 +35,6 @@
       ]
     }
   ],
-  "strDvDATASET_ID": "",
-  "strDvUrlPersistentId": "",
   "strDvApi_DOMAIN": "https://demo-dataverse.rdmc.unc.edu",
   "strDvApi_NAME": "JoCoKnow",
   "strDvApi_PARENT_COLLECTION": "root",

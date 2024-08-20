@@ -17,6 +17,7 @@ class Worker:
         f.close()
         self.ObjDvApi = ObjDvApi(self._config) # here we pass our notebook configuration to the ObjDvApi module and extend the functionality of this object with the ObjDvApi object
         self.strUploadPath = self._config["strDOCKER_WORKING_DIR"]+self._config["strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
+        self.objDatasetMetaPath = os.path.join(self._config["strDOCKER_WORKING_DIR"],"dvDatasetMetadata.json")
         print("Finished installing and importing modules for the",strConfigFile,"environment") # it is a good idea to end your functions with a print statement so you can visually see when the function ends in the notebook output
 
 
@@ -51,7 +52,16 @@ class Worker:
     # @title Delete the dataset defined for this notebook (we cannot call deleteDatasetDraft from the notebook since we need to pass the dataset ID to the method) 
     def deleteDataset(self):
         print("start deleteDataset")
-        self.ObjDvApi.deleteDatasetDraft(self._config["strDvDATASET_ID"])
+        self.readDvDatasetMetadata()
+        if self.objDatasetMeta["strDvDATASET_ID"] == "":
+            raise RuntimeError("***ERROR: No dataset id found.***")
+    
+        self.ObjDvApi.deleteDatasetDraft(self.objDatasetMeta["strDvDATASET_ID"])
+        with open(self.objDatasetMetaPath, mode='w') as jsonFile:
+                objConfig = {"strAbout": ""}
+                objConfig["strDvDATASET_ID"] = ""
+                objConfig["strDvUrlPersistentId"] = ""
+                jsonFile.write(json.dumps(objConfig, indent=2))
         print("end deleteDataset")
 
     
@@ -61,18 +71,27 @@ class Worker:
         if r.status_code==201:
             objRJson = r.json()
             print(r.json())
-            # with open(os.path.join(self._config["strDOCKER_WORKING_DIR"],"_config_dataverseTest.json"), mode='w') as jsonFile:   # read a copy of the metadata
-            #     objConfig = json.load(jsonFile)
-            #     objConfig["strDvDATASET_ID"] = objRJson["data"]["id"]
-            #     objConfig["strDvUrlPersistentId"] = objRJson["data"]["persistentId"]
-            #     jsonFile.write(json.dumps(objConfig, indent=2))
+            with open(self.objDatasetMetaPath, mode='w') as jsonFile:
+                objConfig = {"strAbout": "This file is used to store the dataset identifiers."}
+                objConfig["strDvDATASET_ID"] = objRJson["data"]["id"]
+                objConfig["strDvUrlPersistentId"] = objRJson["data"]["persistentId"]
+                jsonFile.write(json.dumps(objConfig, indent=2))
         print("end createDataset")
-        
+
+
+    # @title Read the dataset metadata
+    def readDvDatasetMetadata(self):
+        f = open(self.objDatasetMetaPath, "r")
+        self.objDatasetMeta = json.loads(f.read())
+        f.close()
+
+    
     # @title Upload files to the dataset
     def uploadTestFiles(self):
         print("start uploadTestFiles")
+        self.readDvDatasetMetadata()
         for objFile in self._config["lstTEST_FILES"]:
             objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
-            objFile["strDvUrlPersistentId"] = self._config["strDvUrlPersistentId"]
+            objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
             self.ObjDvApi.addDatasetFile(objFile) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
         print("end uploadTestFiles")
