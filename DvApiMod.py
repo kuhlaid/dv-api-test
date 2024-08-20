@@ -115,24 +115,41 @@ class ObjDvApi:
         self.printResponseInfo(r)
         print("end deleteDatasetDraft")
 
+
+    # @title Request the dataset contents from the Dataverse so we can compare with what we have locally
+    def getDvDatasetContents(self,objFile):
+        # use the requests module from Python to make a simple request to the Dataverse to check the contents
+        url = self.strDATAVERSE_DOMAIN+"/api/datasets/:persistentId/versions/:latest?persistentId="+objFile["strDvUrlPersistentId"]
+        headers = {
+            "Content-Type": "application/json",
+            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+        }
+        r = requests.request("GET", url, headers=headers)
+        self.dictDatasetContents = r.json()    # convert the response to a dict
+        
     
-    # @title Upload a file to a dataset
+    # @title Add a new file to a dataset (or replace an existing one)
     # @arguments objFile=JSON object defining the file for upload
     def addDatasetFile(self, objFile):
-        # self.checkFileForUpload(strFileName,self.getWorkDirForPath(strLocalFilePath))  # check that we are ready for upload
-        strApiEndpoint = '%s/api/datasets/:persistentId/add?persistentId=%s' % (self.strDATAVERSE_DOMAIN, objFile["strDvUrlPersistentId"])
-        print(objFile)
+        self.getDvDatasetContents(objFile)
+        objFileReturn = self.checkFileForUpload(objFile["strFileName"], os.path.join(objFile["strUploadPath"],objFile["strFileName"]))  # check that we are ready for upload
+        print(objFileReturn)
         # --------------------------------------------------
         # Using a "jsonData" parameter, add optional description + file tags
         # --------------------------------------------------
         params = dict(description=objFile["strDataDescription"],
                     directoryLabel=objFile["strDirectoryLabel"],
                     fileName=objFile["strFileName"],
-                    forceReplace="true",
                     categories=objFile["lstCatgories"])
-        print("uploadFileToDv:",objFile["strFileName"],params)
+        # print("uploadFileToDv:",objFile["strFileName"],params)
         params_as_json_string = json.dumps(params)
         payload = dict(jsonData=params_as_json_string)
+        if (objFileReturn["blnFileExists"]==False): # if the file does not already exist in the dataset we upload it using the 'add' API endpoint
+            strApiEndpoint = '%s/api/datasets/:persistentId/add?persistentId=%s' % (self.strDATAVERSE_DOMAIN, objFile["strDvUrlPersistentId"])
+            # print(objFile)
+        else:  # we have an existing file and we need to replace it
+            strApiEndpoint = '%s/api/files/%s/replace' % (self.strDATAVERSE_DOMAIN, objFileReturn["dataFile"]["id"])
+
         fileobj = open(os.path.join(objFile["strUploadPath"],objFile["strFileName"]), 'rb')  # read the file
         objFilePost = {'file': (objFile["strFileName"], fileobj)}   # we have the new file object to save to the Dataverse
         objHeaders = {
@@ -148,8 +165,61 @@ class ObjDvApi:
     
     # @title General purpose method for printing response properties for testing
     # @argument r=response object from a requests.request()
-    def printResponseInfo(self,r):
+    def printResponseInfo(self,r) -> None:
         print('-' * 40) # simple delineation so we know when this method is called in our output 
         print("json=",r.json())
         print("headers=",r.headers)
         print("response status=",r.status_code)
+
+
+    # @title Check that we have changes to a file before we try uploading to the Dataverse
+    # @param File name, a description we will use to describe the file in the Dataverse
+    # @return blnUploadFile (flag if there is an MD5 mismatch and we can upload a new file)
+    def checkFileForUpload(self, strFileName, strFilePath):
+        # check for an existing file in the Dataverse
+        blnFileExists=False
+        self.blnUploadFile=True
+        strExistingMd5=''
+        objFileReturn={}
+        # print(len(self.dictDatasetContents['data']['files']))
+        for dvFile in self.dictDatasetContents['data']['files']: # loop through the files in the dataset to find the one we want to replace
+            if 'originalFileName' in dvFile['dataFile']:    # NOTE: some files are unique in the Dataverse in that they are not labeled the same way due to the original format switched to tab delimited format, so we need to check for an `originalFileName` element
+                if (dvFile['dataFile']['originalFileName']==strFileName):
+                    # print("originalFileName",dvFile)
+                    intDataFileId = dvFile['dataFile']['id']
+                    # print(dvFile['dataFile']['originalFileName']+"---"+strFileName)
+                    blnFileExists=True
+                    strExistingMd5 = dvFile['dataFile']['md5']
+                    objFileReturn=dvFile
+                    objFileReturn["blnFileExists"]=blnFileExists
+                    break
+            else:
+                if (dvFile['label']==strFileName):     # check files other than files converted to tab delimited in the Dataverse
+                    # print("not originalFileName",dvFile)
+                    intDataFileId = dvFile['dataFile']['id']
+                    # print(dvFile['label']+" label---"+strFileName)
+                    blnFileExists=True
+                    strExistingMd5 = dvFile['dataFile']['md5']
+                    objFileReturn=dvFile
+                    objFileReturn["blnFileExists"]=blnFileExists
+                    break
+    
+        if (blnFileExists): # if the file we are wanting to upload currently exists in the the Dataverse dataset, we check the MD5 checksum of both files and only upload if the MD5 differs
+            newFileMd5 = self.md5(strFilePath)
+            if (newFileMd5==strExistingMd5):
+                print("MD5 hashes match on "+strFileName+", so do not upload new file")
+                self.blnUploadFile=False
+            else:
+                print("Something has changed with the file so we can upload a new version of the file to the Dataverse",newFileMd5,"==",strExistingMd5)
+            objFileReturn["blnAddNew"] = self.blnUploadFile
+        return objFileReturn   #self.blnUploadFile
+
+
+    # @title Generates an MD5 hash for a given file (used to check against files being uploaded to prevent duplicate file uploads)
+    # @argument File path
+    def md5(self, fileToCheck):
+        hash_md5 = hashlib.md5()
+        with open(fileToCheck, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        return hash_md5.hexdigest()

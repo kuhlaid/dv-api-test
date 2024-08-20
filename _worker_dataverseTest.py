@@ -89,9 +89,11 @@ class Worker:
     # @title Upload files to the dataset
     def uploadTestFiles(self):
         print("start uploadTestFiles")
-        self.readDvDatasetMetadata()
-        for objFile in self._config["lstTEST_FILES"]:
+        self.readDvDatasetMetadata() # retrieve the dataset identifiers
+        for objFile in self._config["lstTEST_FILES"]:  # for each test file
             objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
             objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
             self.ObjDvApi.addDatasetFile(objFile) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
         print("end uploadTestFiles")
+
+                
