@@ -144,7 +144,7 @@ class ObjDvApi:
                     directoryLabel=objFile["strDirectoryLabel"],
                     fileName=objFile["strFileName"],
                     categories=objFile["lstCatgories"])
-        self.logger.info("addDatasetFile:",objFile["strFileName"],params)
+        self.logger.info("addDatasetFile: "+objFile["strFileName"]+" "+str(params))
         params_as_json_string = json.dumps(params)
         payload = dict(jsonData=params_as_json_string)
         if (objFileReturn["blnFileExists"]==False): # if the file does not already exist in the dataset we upload it using the 'add' API endpoint
@@ -162,25 +162,24 @@ class ObjDvApi:
         }
         self.logger.info('making request: %s' % strApiEndpoint)
         if (objFileReturn["blnMd5Match"]==True and objFileReturn["blnFileExists"]==True): # we handle a metadata only update differently
-            self.logger.info('metadata only update')
-            r = requests.request("POST", strApiEndpoint, data=payload, headers=objHeaders)
-            self.logger.info(curlify.to_curl(r.request))
-        else:
+            objfileData = {'jsonData': (None, params_as_json_string)}  # we have to set up the metadata as file data for this API endpoint
+            r = requests.request("POST", strApiEndpoint, files=objfileData, headers=objHeaders)
+        else: # update or add new file
             r = requests.request("POST", strApiEndpoint, data=payload, files=objFilePost, headers=objHeaders)
+        self.logger.info(curlify.to_curl(r.request))
         self.printResponseInfo(r)
         self.logger.info("--end uploadFileToDv--")
 
-    
-    
     
     # @title General purpose method for printing response properties for testing
     # @argument r=response object from a requests.request()
     def printResponseInfo(self,r) -> None:
         self.logger.info('-' * 40) # simple delineation so we know when this method is called in our output 
-        self.logger.info("json="+str(r.json()))
-        self.logger.info("headers="+str(r.headers))
         self.logger.info("response status="+str(r.status_code))
-
+        self.logger.info("headers="+str(r.headers))
+        if json in r:  # if we have response JSON then log it
+            self.logger.info("json="+str(r.json()))
+        
 
     # @title Check that we have changes to a file before we try uploading to the Dataverse
     # @param File name, a description we will use to describe the file in the Dataverse
@@ -206,11 +205,11 @@ class ObjDvApi:
             newFileMd5 = self.md5(strFilePath)
             self.logger.info("MD5 are local "+newFileMd5+" and dataset "+strExistingMd5)
             if (newFileMd5==strExistingMd5):
-                self.logger.info("MD5 hashes match on "+strFileName+", so do not upload new file")
+                self.logger.info("MD5 hashes match on "+strFileName+" so do not upload new file")
                 self.blnUploadFile=False
                 objFileReturn["blnMd5Match"] = True
             else:
-                self.logger.info("Something has changed with the file so we can upload a new version of the file to the Dataverse",newFileMd5,"==",strExistingMd5)
+                self.logger.info("Something has changed with the file so we can upload a new version of the file to the Dataverse"+newFileMd5+"=="+strExistingMd5)
                 objFileReturn["blnMd5Match"] = False
         return objFileReturn
 
