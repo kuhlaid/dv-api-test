@@ -8,7 +8,7 @@ from pandas import DataFrame
 # import shutil
 from os.path import exists
 from DvApiMod import ObjDvApi  # pull in the Dataverse API functions from our external file
-
+from IPython.display import HTML, display
 import time, datetime
 
 handler = logging.StreamHandler()  # event logging (this needs to be outside the class otherwise it will create duplicate instances)
@@ -52,11 +52,11 @@ class Worker:
 
 
     # @title Generate files for the dataset
-    def createTestFiles(self):
+    def createTestFiles(self, strTestList):
         self.logger.info("start createTestFiles")
         if not os.path.exists(self.strUploadPath):
             os.mkdir(self.strUploadPath)  # create file path if not exists for storing our sample data
-        for obj in self._config["lstTEST_FILES"]:
+        for obj in self._config[strTestList]:
             if "blnJsonToCsv" in obj and obj["blnJsonToCsv"] == "true":
                 objJson = self.createSampleData() # create sample data and save to a CSV file
                 pd.DataFrame.from_dict(objJson).to_csv(os.path.join(self.strUploadPath,obj["strFileName"]), index=False)
@@ -64,7 +64,6 @@ class Worker:
                 with open(os.path.join(self.strUploadPath,obj["strFileName"]), mode='w') as objFile:
                     objFile.write(json.dumps(self.createSampleData(), indent=2))
                     objFile.close() # *** WE MUST CLOSE THE FILE AFTER CREATING IT OTHERWISE WE WILL NOT BE ABLE TO OPEN THE FILE FOR UPLOAD ***
-                # self.uploadFile(obj["name"], obj["type"]) # we will do this in a separate function
         self.logger.info("end createTestFiles")
 
 
@@ -83,7 +82,31 @@ class Worker:
                 jsonFile.write(json.dumps(objConfig, indent=2))
         self.logger.info("end deleteDataset")
 
-    
+
+    def getDatasetFiles(self, strVersion):
+        self.logger.info("start getDatasetFiles")
+        self.readDvDatasetMetadata()
+        if self.objDatasetMeta["strDvDATASET_ID"] == "":
+            raise RuntimeError("***ERROR: No dataset id found.***")
+        objResponse = self.ObjDvApi.getDatasetFiles(self.objDatasetMeta["strDvDATASET_ID"], strVersion)
+        lstDataFiles = []
+        objJson = objResponse.json()
+        for objData in objJson["data"]: # we need to extract the file details (such as ID)
+            lstDataFiles.append(objData["dataFile"])
+        return lstDataFiles
+        self.logger.info("end getDatasetFiles")
+
+        
+    # @title View dataset files
+    def viewDatasetFiles(self, strVersion):
+        self.logger.info("start viewDatasetFiles")
+        lstDataFiles = self.getDatasetFiles(strVersion)
+        dfData = pd.DataFrame(lstDataFiles)
+        display(HTML(dfData[["id", "filename", "description"]].to_html())) # print out a nice table listing the files
+        self.logger.info("end viewDatasetFiles")
+
+
+    # @title Initiates the creation of a dataset
     def createDataset(self):
         self.logger.info("start createDataset")
         r = self.ObjDvApi.createDataset()
@@ -106,15 +129,17 @@ class Worker:
 
     
     # @title Upload files to the dataset
-    def uploadTestFiles(self):
+    # @arguments strTestList="the list name in the configuration to use for uploading files"
+    def uploadTestFiles(self, strTestList):
         self.logger.info("start uploadTestFiles")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
-        for objFile in self._config["lstTEST_FILES"]:  # for each test file
+        for objFile in self._config[strTestList]:  # for each test file
             objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
             objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
             self.ObjDvApi.addDatasetFile(objFile) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
         self.logger.info("end uploadTestFiles")
 
+    
     # @title Publish a dataset
     def publishDatasetDraft(self, strType="minor"):
         self.logger.info("start publishDatasetDraft")
@@ -123,4 +148,22 @@ class Worker:
         objDatasetMeta["dv_alias"] = self._config["objDvApi_COLLECTION_START"]["alias"]
         self.ObjDvApi.publishDatasetDraft(objDatasetMeta,strType)
         self.logger.info("end publishDatasetDraft")
+
+
+    # @title Delete files we no longer want to use in a new version of the dataset
+    # @arguments strNewFileList="the list name in the configuration to use for defining the files we want in the dataset"
+    def removeUnusedFiles(self,strNewFileList, strVersion):
+        self.logger.info("start removeUnusedFiles")
+        lstDataFiles = self.getDatasetFiles(strVersion)
+        lstNewFiles = []
+        for newFile in self._config[strNewFileList]:
+            lstNewFiles.append(newFile["strFileName"])
+        for objFile in lstDataFiles:
+            if 'originalFileName' in objFile:
+                if objFile["originalFileName"] not in lstNewFiles:
+                    print("remove",objFile["originalFileName"])
+            else:
+                if objFile["filename"] not in lstNewFiles:
+                    print("remove",objFile["filename"])
+        self.logger.info("end removeUnusedFiles")
                 

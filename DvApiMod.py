@@ -118,6 +118,22 @@ class ObjDvApi:
         self.printResponseInfo(r)
         self.logger.info("end deleteDatasetDraft")
 
+    
+    # @title Get dataset file details
+    def getDatasetFiles(self, strDatasetId, strVersion):
+        self.logger.info("start viewDatasetFiles")
+        strApiEndpoint = '%s/api/datasets/%s/versions/%s/files' % (self.strDATAVERSE_DOMAIN, strDatasetId, strVersion)
+        self.logger.info('making request: %s' % strApiEndpoint)
+        objHeaders = {
+            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+        }
+        r = requests.request("GET", strApiEndpoint, headers=objHeaders)
+        self.printResponseInfo(r)
+        if (r.status_code!=200):
+            raise RuntimeError("***ERROR: The dataset information could not be retrieved***")
+        self.logger.info("end viewDatasetFiles")
+        return r
+
 
     # @title Publish a dataset draft
     def publishDatasetDraft(self, objDatasetMeta, strType):
@@ -198,7 +214,31 @@ class ObjDvApi:
         self.printResponseInfo(r)
         self.logger.info("--end uploadFileToDv--")
 
+
+    # @title Delete files we no longer want to use in a new version of the dataset
+    # @arguments strNewFileList="the list name in the configuration to use for defining the files we want in the dataset"
+    def removeUnusedFiles(self, strNewFileList):
+        self.logger.info("start removeUnusedFiles")
+        # compare the files we want with the files currently in the dataset draft and remove the old files we no longer need
+        print(strNewFileList)
+        self.getDatasetFiles()
+        # self.removeFile()
+        self.logger.info("end removeUnusedFiles")
+
     
+    # @title Delete a draft file
+    def removeFile(self, strFileId):
+        self.logger.info("start removeFile")
+        strApiEndpoint = '%s/api/files/%s' % (self.strDATAVERSE_DOMAIN, strDatasetId)
+        self.logger.info('making request: %s' % strApiEndpoint)
+        objHeaders = {
+            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+        }
+        r = requests.request("DELETE", strApiEndpoint, headers=objHeaders)
+        self.printResponseInfo(r)
+        self.logger.info("end removeFile")
+        
+        
     # @title General purpose method for printing response properties for testing
     # @argument r=response object from a requests.request()
     def printResponseInfo(self,r):
