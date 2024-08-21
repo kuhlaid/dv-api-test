@@ -115,4 +115,12 @@ class Worker:
             self.ObjDvApi.addDatasetFile(objFile) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
         self.logger.info("end uploadTestFiles")
 
+    # @title Publish a dataset
+    def publishDatasetDraft(self, strType="minor"):
+        self.logger.info("start publishDatasetDraft")
+        self.readDvDatasetMetadata() # retrieve the dataset identifiers
+        objDatasetMeta = self.objDatasetMeta
+        objDatasetMeta["dv_alias"] = self._config["objDvApi_COLLECTION_START"]["alias"]
+        self.ObjDvApi.publishDatasetDraft(objDatasetMeta,strType)
+        self.logger.info("end publishDatasetDraft")
                 

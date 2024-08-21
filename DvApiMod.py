@@ -19,7 +19,7 @@ import os
 # @title By placing all of our Python function within a class object, it makes it much easier for information to be used across functions without needing to explicitly passing them into each function (instead we pass the entire Worker object into the functions so each function can do what it needs with the object)
 class ObjDvApi:
     # @param objConfig (we initialize this object with our notebook configuration)
-    def __init__(self,objConfig) -> None:
+    def __init__(self,objConfig):
         self.eventLogger()
         self.objConfig = objConfig
         self.strDATAVERSE_PARENT_COLLECTION = self.objConfig["strDvApi_PARENT_COLLECTION"]
@@ -35,7 +35,7 @@ class ObjDvApi:
         
     
     # @title Create a new Dataverse collection (which is the same thing as creating a new Dataverse)
-    def createCollection(self) -> None:
+    def createCollection(self):
         self.logger.info("start createCollection")
         strApiEndpoint = '%s/api/dataverses/%s' % (self.strDATAVERSE_DOMAIN, self.strDATAVERSE_PARENT_COLLECTION)
         self.logger.info('making request: %s' % strApiEndpoint)
@@ -49,7 +49,7 @@ class ObjDvApi:
         
 
     # @title View a new Dataverse collection based on the collection alias
-    def viewCollection(self) -> None:
+    def viewCollection(self):
         self.logger.info("start viewCollection")
         strApiEndpoint = '%s/api/dataverses/%s' % (self.strDATAVERSE_DOMAIN, self.objConfig["objDvApi_COLLECTION_START"]["alias"])
         self.logger.info('making request: %s' % strApiEndpoint)
@@ -77,7 +77,7 @@ class ObjDvApi:
         
 
     # @title List Dataverse collection contents based on the collection alias
-    def viewCollectionContents(self) -> None:
+    def viewCollectionContents(self):
         self.logger.info("start viewCollectionContents")
         strApiEndpoint = '%s/api/dataverses/%s/contents' % (self.strDATAVERSE_DOMAIN, self.objConfig["objDvApi_COLLECTION_START"]["alias"])
         self.logger.info('making request: %s' % strApiEndpoint)
@@ -107,7 +107,7 @@ class ObjDvApi:
 
 
     # @title Delete a dataset draft
-    def deleteDatasetDraft(self, strDatasetId) -> None:
+    def deleteDatasetDraft(self, strDatasetId):
         self.logger.info("start deleteDatasetDraft")
         strApiEndpoint = '%s/api/datasets/%s/versions/:draft' % (self.strDATAVERSE_DOMAIN, strDatasetId)
         self.logger.info('making request: %s' % strApiEndpoint)
@@ -117,6 +117,34 @@ class ObjDvApi:
         r = requests.request("DELETE", strApiEndpoint, headers=objHeaders)
         self.printResponseInfo(r)
         self.logger.info("end deleteDatasetDraft")
+
+
+    # @title Publish a dataset draft
+    def publishDatasetDraft(self, objDatasetMeta, strType):
+        self.logger.info("start publishDatasetDraft")
+        # first we will make sure our collection is published
+        strApiEndpoint = '%s/api/dataverses/%s/actions/:publish' % (self.strDATAVERSE_DOMAIN, objDatasetMeta["dv_alias"])
+        self.logger.info('making request: %s' % strApiEndpoint)
+        objHeaders = {
+            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+        }
+        r = requests.request("POST", strApiEndpoint, headers=objHeaders)
+        self.printResponseInfo(r)
+        self.logger.info(curlify.to_curl(r.request))
+        if (r.status_code!=200):
+            raise RuntimeError("***ERROR: The Dataverse collection could not be published***")
+        
+        strApiEndpoint = '%s/api/datasets/:persistentId/actions/:publish?persistentId=%s&type=%s' % (self.strDATAVERSE_DOMAIN, objDatasetMeta["strDvUrlPersistentId"], strType)
+        self.logger.info('making request: %s' % strApiEndpoint)
+        objHeaders = {
+            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+        }
+        r = requests.request("POST", strApiEndpoint, headers=objHeaders)
+        self.printResponseInfo(r)
+        self.logger.info(curlify.to_curl(r.request))
+        self.logger.info("end publishDatasetDraft")
+        if (r.status_code!=200):
+            raise RuntimeError("***ERROR: The dataset could not be published***")
 
 
     # @title Request the dataset contents from the Dataverse so we can compare with what we have locally
@@ -173,11 +201,11 @@ class ObjDvApi:
     
     # @title General purpose method for printing response properties for testing
     # @argument r=response object from a requests.request()
-    def printResponseInfo(self,r) -> None:
+    def printResponseInfo(self,r):
         self.logger.info('-' * 40) # simple delineation so we know when this method is called in our output 
         self.logger.info("response status="+str(r.status_code))
         self.logger.info("headers="+str(r.headers))
-        if json in r:  # if we have response JSON then log it
+        if "json" in dir(r):  # if we have response JSON function then log it
             self.logger.info("json="+str(r.json()))
         
 
