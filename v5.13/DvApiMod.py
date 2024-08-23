@@ -76,9 +76,9 @@ class ObjDvApi:
         self.logger.info("end deleteCollection")
         
 
-    # @title List Dataverse collection contents based on the collection alias
-    def viewCollectionContents(self):
-        self.logger.info("start viewCollectionContents")
+    # @title Get Dataverse collection contents based on the collection alias
+    def getCollectionContents(self):
+        self.logger.info("start getCollectionContents")
         strApiEndpoint = '%s/api/dataverses/%s/contents' % (self.strDATAVERSE_DOMAIN, self.objConfig["objDvApi_COLLECTION_START"]["alias"])
         self.logger.info('making request: %s' % strApiEndpoint)
         objHeaders = {
@@ -86,6 +86,14 @@ class ObjDvApi:
             "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
         }
         r = requests.request("GET", strApiEndpoint, headers=objHeaders)
+        self.logger.info("end getCollectionContents")
+        return r
+        
+        
+    # @title List Dataverse collection contents based on the collection alias
+    def viewCollectionContents(self):
+        self.logger.info("start viewCollectionContents")
+        r = self.getCollectionContents()
         self.printResponseInfo(r)
         self.logger.info("end viewCollectionContents")
 
@@ -138,18 +146,30 @@ class ObjDvApi:
     # @title Publish a dataset draft
     def publishDatasetDraft(self, objDatasetMeta, strType):
         self.logger.info("start publishDatasetDraft")
-        # first we will make sure our collection is published
-        strApiEndpoint = '%s/api/dataverses/%s/actions/:publish' % (self.strDATAVERSE_DOMAIN, objDatasetMeta["dv_alias"])
-        self.logger.info('making request: %s' % strApiEndpoint)
-        objHeaders = {
-            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
-        }
-        r = requests.request("POST", strApiEndpoint, headers=objHeaders)
-        self.printResponseInfo(r)
-        self.logger.info(curlify.to_curl(r.request))
-        if (r.status_code!=200):
-            raise RuntimeError("***ERROR: The Dataverse collection could not be published***")
-        
+        # first we will check if our collection is published
+        r = self.getCollectionContents()
+        blnCollectionNotPublished = True
+        if "json" in dir(r):
+            jsonR = r.json()
+            for objDataset in jsonR["data"]:
+                if "publicationDate" in objDataset:
+                    blnCollectionNotPublished = False # the cllectiong seems to published
+                    
+        # ========= publish the collection if needed
+        if blnCollectionNotPublished:
+            strApiEndpoint = '%s/api/dataverses/%s/actions/:publish' % (self.strDATAVERSE_DOMAIN, objDatasetMeta["dv_alias"])
+            self.logger.info('making request: %s' % strApiEndpoint)
+            objHeaders = {
+                "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+            }
+            r = requests.request("POST", strApiEndpoint, headers=objHeaders)
+            self.printResponseInfo(r)
+            self.logger.info(curlify.to_curl(r.request))
+            if (r.status_code!=200):
+                raise RuntimeError("***ERROR: The Dataverse collection could not be published***")
+        # ========= end publishing the collection if needed
+
+        # ========= publish the dataset
         strApiEndpoint = '%s/api/datasets/:persistentId/actions/:publish?persistentId=%s&type=%s' % (self.strDATAVERSE_DOMAIN, objDatasetMeta["strDvUrlPersistentId"], strType)
         self.logger.info('making request: %s' % strApiEndpoint)
         objHeaders = {
@@ -172,7 +192,10 @@ class ObjDvApi:
             "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
         }
         r = requests.request("GET", url, headers=headers)
-        self.dictDatasetContents = r.json()    # convert the response to a dict
+        if "json" in dir(r):
+            self.dictDatasetContents = r.json()    # convert the response to a dict
+        else:
+            raise RuntimeError("***ERROR: Could not retrieve the dataset contents***")
         
     
     # @title Add a new file to a dataset (or replace an existing one)
@@ -226,17 +249,20 @@ class ObjDvApi:
         self.logger.info("end removeUnusedFiles")
 
     
-    # @title Delete a draft file
+    # @title Delete a draft file (using SWORD API https://guides.dataverse.org/en/5.13/api/sword.html#delete-a-file-by-database-id)
     def removeFile(self, strFileId):
         self.logger.info("start removeFile")
-        strApiEndpoint = '%s/api/files/%s' % (self.strDATAVERSE_DOMAIN, strFileId)
+        strApiEndpoint = '%s/dvn/api/data-deposit/v1.1/swordv2/edit-media/file/%s' % (self.strDATAVERSE_DOMAIN, strFileId)
+        # strApiEndpoint = '%s/api/files/%s' % (self.strDATAVERSE_DOMAIN, strFileId)  # this does not work in v5.13
         self.logger.info('making request: %s' % strApiEndpoint)
-        objHeaders = {
-            "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
-        }
-        r = requests.request("DELETE", strApiEndpoint, headers=objHeaders)
+        # objHeaders = {
+        #     "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
+        # }
+        r = requests.request("DELETE", strApiEndpoint, auth=(self.strDATAVERSE_API_TOKEN, ''))
+        self.logger.info(curlify.to_curl(r.request))
+        # r = requests.request("DELETE", strApiEndpoint, headers=objHeaders) # this is for the Native API
         self.printResponseInfo(r)
-        if (r.status_code!=200):
+        if (r.status_code!=204):
             raise RuntimeError("***ERROR: The file could not be deleted***")
         self.logger.info("end removeFile")
         
