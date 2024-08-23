@@ -229,13 +229,15 @@ class ObjDvApi:
     # @title Delete a draft file
     def removeFile(self, strFileId):
         self.logger.info("start removeFile")
-        strApiEndpoint = '%s/api/files/%s' % (self.strDATAVERSE_DOMAIN, strDatasetId)
+        strApiEndpoint = '%s/api/files/%s' % (self.strDATAVERSE_DOMAIN, strFileId)
         self.logger.info('making request: %s' % strApiEndpoint)
         objHeaders = {
             "X-Dataverse-Key": self.strDATAVERSE_API_TOKEN
         }
         r = requests.request("DELETE", strApiEndpoint, headers=objHeaders)
         self.printResponseInfo(r)
+        if (r.status_code!=200):
+            raise RuntimeError("***ERROR: The file could not be deleted***")
         self.logger.info("end removeFile")
         
         

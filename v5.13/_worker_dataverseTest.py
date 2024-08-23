@@ -154,16 +154,18 @@ class Worker:
     # @arguments strNewFileList="the list name in the configuration to use for defining the files we want in the dataset"
     def removeUnusedFiles(self,strNewFileList, strVersion):
         self.logger.info("start removeUnusedFiles")
-        lstDataFiles = self.getDatasetFiles(strVersion)
+        lstDatasetFiles = self.getDatasetFiles(strVersion)
         lstNewFiles = []
         for newFile in self._config[strNewFileList]:
             lstNewFiles.append(newFile["strFileName"])
-        for objFile in lstDataFiles:
-            if 'originalFileName' in objFile:
+        for objFile in lstDatasetFiles:
+            if 'originalFileName' in objFile: # we must check for files (such as CSV) that are converted to TAB once they are uploaded to the Dataverse and use their original file name when comparing
                 if objFile["originalFileName"] not in lstNewFiles:
                     print("remove",objFile["originalFileName"])
+                    self.ObjDvApi.removeFile(objFile["id"])
             else:
                 if objFile["filename"] not in lstNewFiles:
                     print("remove",objFile["filename"])
+                    self.ObjDvApi.removeFile(objFile["id"])
         self.logger.info("end removeUnusedFiles")
                 

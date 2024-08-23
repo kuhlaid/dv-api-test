@@ -4,7 +4,7 @@ This notebook will be run against the demo server of the Dataverse at https://de
 
 ## Configure a local Jupyter Server
 
-`cd "/mnt/c/Users/pgale/University of North Carolina at Chapel Hill/TarcStudyDataRepository - Files/DataPull/364-dp/Note3/dv-api-test"`
+`cd "/mnt/c/Users/pgale/University of North Carolina at Chapel Hill/TarcStudyDataRepository - Files/DataPull/364-dp/Note3/dv-api-test/v5.13"`
 
 `docker run -it --name 364-dp-DataverseApiTest --mount type=bind,source="$(pwd)",target="/home/jovyan/work" --add-host=host.docker.internal:host-gateway -p 10000:8888 quay.io/jupyter/scipy-notebook:latest`
 

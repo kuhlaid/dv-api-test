@@ -2,11 +2,12 @@
   "strAboutThisConfiguration": "This configuration is used against the demo UNC Dataverse (https://demo-dataverse.rdmc.unc.edu/dataverse/root).",
   "strDOCKER_WORKING_DIR": "/home/jovyan/work",
   "strLOCAL_UPLOAD_DIR": "/uploads",
+  "blnSHOW_DEBUG_STATEMENTS": 1,
   "lstTEST_FILES": [
     {
       "strFileName": "sampleFile.txt",
       "type": "application/octet-stream",
-      "strDataDescription": "First testing file",
+      "strDataDescription": "third testing file",
       "strDirectoryLabel": "data/testing",
       "lstCatgories": [
         "data",
@@ -16,7 +17,7 @@
     {
       "strFileName": "sampleFile.json",
       "type": "application/octet-stream",
-      "strDataDescription": "Second testing JSON file",
+      "strDataDescription": "third testing JSON file",
       "strDirectoryLabel": "data/testing",
       "lstCatgories": [
         "data",
@@ -27,8 +28,31 @@
       "strFileName": "sampleFile.csv",
       "blnJsonToCsv": "true",
       "type": "application/octet-stream",
-      "strDataDescription": "First CSV file",
+      "strDataDescription": "third CSV file",
       "strDirectoryLabel": "data/testing",
+      "lstCatgories": [
+        "data",
+        "table"
+      ]
+    }
+  ],
+  "lstTEST_FILES2": [
+    {
+      "strFileName": "sampleFile_replace.json",
+      "type": "application/octet-stream",
+      "strDataDescription": "replacement test one",
+      "strDirectoryLabel": "data/testing1",
+      "lstCatgories": [
+        "data",
+        "object"
+      ]
+    },
+    {
+      "strFileName": "sampleFile.csv",
+      "blnJsonToCsv": "true",
+      "type": "application/octet-stream",
+      "strDataDescription": "replacement test",
+      "strDirectoryLabel": "data/testing1",
       "lstCatgories": [
         "data",
         "table"
@@ -38,8 +62,7 @@
   "strDvApi_DOMAIN": "https://demo-dataverse.rdmc.unc.edu",
   "strDvApi_NAME": "JoCoKnow",
   "strDvApi_PARENT_COLLECTION": "root",
-  "strDvApi_TOKEN": "[You will need to log into the Dataverse site and create an API token if you do not have one. Paste your token here.]",
-  "strDvApi_DATASET_DOI": "",
+  "strDvApi_TOKEN": "[Paste your Dataverse API token here]",
   "objDvApi_COLLECTION_START": {
     "name": "JoCoKnow",
     "alias": "jocoknow",
