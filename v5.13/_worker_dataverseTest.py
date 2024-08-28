@@ -7,7 +7,7 @@ import pandas as pd
 from pandas import DataFrame
 # import shutil
 from os.path import exists
-from DvApiMod import ObjDvApi  # pull in the Dataverse API functions from our external file
+from DvApiMod_pip_package import ObjDvApi # pull in the Dataverse API functions from our external file that we installed
 from IPython.display import HTML, display
 import time, datetime
 
