@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [x] when publishing a dataset draft, check to make sure the collection is published first and publish if not
 - [x] added ability to remove files from the draft state of a dataset
-- [ ] fix the error being thrown when deleting a dataset file
+- [x] fix the error being thrown when deleting a dataset file
+- [x] moving the Dataverse API class to an externally hosted Python plugin (https://github.com/kuhlaid/DvApiMod5.13)
 
 ## [v0.0.1] - 2024-08-21
 
