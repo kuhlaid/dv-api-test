@@ -15,7 +15,11 @@ The `strDvApi_TOKEN` variable will need to be set to the Dataverse API token you
 I use VSCode editor for Windows and the `Markdown All in One` extension. I also use Docker Desktop to 
 start a local Jupyter Server from a WSL terminal in VSCode. The commands I use are:
 
+Switch the directory in the terminal to the location of the notebook file.
+
 `cd "/mnt/c/Users/pgale/University of North Carolina at Chapel Hill/TarcStudyDataRepository - Files/DataPull/364-dp/Note3/dv-api-test/v5.13"`
+
+Start the Jupyter server using Docker.
 
 `docker run -it --name 364-dp-DataverseApiTest --mount type=bind,source="$(pwd)",target="/home/jovyan/work" --add-host=host.docker.internal:host-gateway -p 10000:8888 quay.io/jupyter/scipy-notebook:latest`
 
@@ -37,5 +41,4 @@ Below is an explanation of some key variables found in the configuration file.
 - `strDvApi_PARENT_COLLECTION` the Dataverse collection alias your Dataverse will be stored under
 - `strDvApi_TOKEN` your Dataverse API token
 - `objDvApi_COLLECTION_START` the properties you will use to initialze your Dataverse
-- `objDvApi_DATASET_PART` a partial JSON configuration for initializing a dataset via the API
-- `strDvApi_DATASET_FULL` DOES NOT WORK - this JSON configuration comes from the Dataverse documentation but is not compatible with the API (this would be used to initialize a dataset if it worked)
+- `objDvApi_DATASET_INIT` - **required object for the DvApiMod5.13 package*** this object is used to initialize a dataset and contains most of the default metadata fields; the `DvApiMod5.13` package explicitly uses this object so do not change the name of this variable

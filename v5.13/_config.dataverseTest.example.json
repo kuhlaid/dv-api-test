@@ -78,89 +78,7 @@
     "description": "JoCoOA and JoCoHS data repository",
     "dataverseType": "RESEARCH_PROJECTS"
   },
-  "objDvApi_DATASET_PART": {
-    "datasetVersion": {
-      "metadataBlocks": {
-        "citation": {
-          "fields": [
-            {
-              "value": "Joco dataset 1",
-              "typeClass": "primitive",
-              "multiple": false,
-              "typeName": "title"
-            },
-            {
-              "typeClass": "compound",
-              "multiple": true,
-              "typeName": "author",
-              "value": [
-                {
-                  "authorName": {
-                    "value": "Nelson, Amanda",
-                    "typeClass": "primitive",
-                    "multiple": false,
-                    "typeName": "authorName"
-                  },
-                  "authorAffiliation": {
-                    "value": "UNC - Chapel Hill",
-                    "typeClass": "primitive",
-                    "multiple": false,
-                    "typeName": "authorAffiliation"
-                  }
-                }
-              ]
-            },
-            {
-              "typeClass": "compound",
-              "multiple": true,
-              "typeName": "datasetContact",
-              "value": [
-                {
-                  "datasetContactEmail": {
-                    "typeClass": "primitive",
-                    "multiple": false,
-                    "typeName": "datasetContactEmail",
-                    "value": "w.patrick.gale@unc.edu"
-                  },
-                  "datasetContactName": {
-                    "typeClass": "primitive",
-                    "multiple": false,
-                    "typeName": "datasetContactName",
-                    "value": "Gale, W. Patrick"
-                  }
-                }
-              ]
-            },
-            {
-              "value": [
-                {
-                  "dsDescriptionValue": {
-                    "value": "Darwin's finches (also known as the Galápagos finches) are a group of about fifteen species of passerine birds.",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "typeName": "dsDescriptionValue"
-                  }
-                }
-              ],
-              "typeClass": "compound",
-              "multiple": true,
-              "typeName": "dsDescription"
-            },
-            {
-              "value": [
-                "Medicine, Health and Life Sciences"
-              ],
-              "typeClass": "controlledVocabulary",
-              "multiple": true,
-              "typeName": "subject"
-            }
-          ],
-          "displayName": "Citation Metadata"
-        }
-      }
-    }
-  },
-  "strDvApi_DATASET_FULL": {
+  "objDvApi_DATASET_INIT": {
     "datasetVersion": {
       "license": {
         "name": "CC0 1.0",
@@ -628,9 +546,12 @@
             },
             {
               "typeName": "productionPlace",
-              "multiple": false,
+              "multiple": true,
               "typeClass": "primitive",
-              "value": "ProductionPlace"
+              "value": [
+                "ProductionPlace1",
+                "ProductionPlace2"
+              ]
             },
             {
               "typeName": "contributor",
@@ -1049,65 +970,6 @@
               "value": [
                 "GeographicUnit1",
                 "GeographicUnit2"
-              ]
-            },
-            {
-              "typeName": "geographicBoundingBox",
-              "multiple": true,
-              "typeClass": "compound",
-              "value": [
-                {
-                  "westLongitude": {
-                    "typeName": "westLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "10"
-                  },
-                  "eastLongitude": {
-                    "typeName": "eastLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "20"
-                  },
-                  "northLongitude": {
-                    "typeName": "northLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "30"
-                  },
-                  "southLongitude": {
-                    "typeName": "southLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "40"
-                  }
-                },
-                {
-                  "westLongitude": {
-                    "typeName": "westLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "50"
-                  },
-                  "eastLongitude": {
-                    "typeName": "eastLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "60"
-                  },
-                  "northLongitude": {
-                    "typeName": "northLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "70"
-                  },
-                  "southLongitude": {
-                    "typeName": "southLongitude",
-                    "multiple": false,
-                    "typeClass": "primitive",
-                    "value": "80"
-                  }
-                }
               ]
             }
           ]
@@ -1568,7 +1430,6 @@
               "multiple": true,
               "typeClass": "controlledVocabulary",
               "value": [
-                "cell counting",
                 "cell sorting",
                 "clinical chemistry analysis",
                 "DNA methylation profiling"

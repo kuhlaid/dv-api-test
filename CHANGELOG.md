@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v0.0.5] - future
+
+- [ ] need to add a package version so that when users install the package, the package version is shown to the user
+
+## [v0.0.4] - 2024-08-30
+
+- [x] tested the full dataset metadata; I had made an update to the `DvApiMod5.13` package, but without  does not have a version attached to it when installing. This doesn't matter 99% of the time but without it the wheel that is created during the install keeps reverting to the cache likely because the name of the wheel remains the same; as a result the server needs to be restarted so that the latest version of the package is used in the notebook
 
 ## [v0.0.3] - 2024-08-28
 

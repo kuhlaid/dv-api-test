@@ -3,7 +3,7 @@ import subprocess
 import sys
 
 def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--no-cache-dir", package])
 
 # =============== Below is the list of PIP packages we want installed
 # If you do not need any of the following modules then you can skip running this script in your `_worker` script
