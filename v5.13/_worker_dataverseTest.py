@@ -11,6 +11,8 @@ from DvApiMod_pip_package import ObjDvApi # pull in the Dataverse API functions 
 from IPython.display import HTML, display
 import time, datetime
 
+# from testAPIPkg import ObjDvApi  # local testing of Dataverse API functions
+
 handler = logging.StreamHandler()  # event logging (this needs to be outside the class otherwise it will create duplicate instances)
 
 # @title By placing all of our Python function within a class object, it makes it much easier for information to be used across functions without needing to explicitly passing them into each function (instead we pass the entire Worker object into the functions so each function can do what it needs with the object)
@@ -136,7 +138,12 @@ class Worker:
         for objFile in self._config[strTestList]:  # for each test file
             objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
             objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
-            self.ObjDvApi.addDatasetFile(objFile) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
+            # here we map our file metadata to the Dataverse API parameters for adding a file
+            objParams = dict(description=objFile["strDataDescription"],
+                directoryLabel=objFile["strDirectoryLabel"],
+                fileName=objFile["strFileName"],
+                categories=objFile["lstCatgories"])
+            self.ObjDvApi.addDatasetFile(objFile,objParams) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
         self.logger.info("end uploadTestFiles")
 
     

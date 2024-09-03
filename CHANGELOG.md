@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.0.5] - future
 
-- [ ] need to add a package version so that when users install the package, the package version is shown to the user
+- [x] **(IMPORTANT)** allow for passing the file upload parameters to the `addDatasetFile` method so users are not forced to us a set JSON format in their metadata
 
 ## [v0.0.4] - 2024-08-30
 
