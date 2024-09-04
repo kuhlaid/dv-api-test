@@ -29,7 +29,28 @@ class Worker:
         self.logger.info("Finished installing and importing modules for the "+strConfigFile+" environment")
         # it is a good idea to end your functions with a print statement so you can visually see when the function ends in the notebook output
 
+    
+    # @title Here we need to send our Collection information to the DvApiMod_pip_package
+    def createCollection(self):
+        self.ObjDvApi.createCollection(self._config["objDvApi_COLLECTION_START"])  # initialize a new collection
 
+    
+    # @title View a new Dataverse collection based on the collection alias
+    def viewCollection(self):
+        self.ObjDvApi.viewCollection(self._config["objDvApi_COLLECTION_START"]["alias"])  # view collection based on the alias
+
+
+    # @title Delete a new Dataverse collection based on the collection alias
+    def deleteCollection(self):
+        self.ObjDvApi.deleteCollection(self._config["objDvApi_COLLECTION_START"]["alias"])  # delete collection based on the alias
+
+    
+    # @title List Dataverse collection contents based on the collection alias
+    def viewCollectionContents(self):
+        self.ObjDvApi.viewCollectionContents(self._config["objDvApi_COLLECTION_START"]["alias"])  # list collection contents based on the alias
+  
+
+    
     # @title This will set our system logging messages, which can be turned off in the configuration if desired
     def eventLogger(self):
         # time.time()-14400 # this is a hack for Windows computers on EST time (4 hours or 14400 seconds behind)
@@ -111,7 +132,7 @@ class Worker:
     # @title Initiates the creation of a dataset
     def createDataset(self):
         self.logger.info("start createDataset")
-        r = self.ObjDvApi.createDataset()
+        r = self.ObjDvApi.createDataset(self._config["objDvApi_COLLECTION_START"]["alias"], self._config["objDvApi_DATASET_INIT"])
         if r.status_code==201:
             objRJson = r.json()
             self.logger.info(r.json())
@@ -152,8 +173,7 @@ class Worker:
         self.logger.info("start publishDatasetDraft")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         objDatasetMeta = self.objDatasetMeta
-        objDatasetMeta["dv_alias"] = self._config["objDvApi_COLLECTION_START"]["alias"]
-        self.ObjDvApi.publishDatasetDraft(objDatasetMeta,strType)
+        self.ObjDvApi.publishDatasetDraft(objDatasetMeta,strType, self._config["objDvApi_COLLECTION_START"]["alias"])
         self.logger.info("end publishDatasetDraft")
 
 
