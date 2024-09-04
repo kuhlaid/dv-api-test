@@ -17,7 +17,7 @@ start a local Jupyter Server from a WSL terminal in VSCode. The commands I use a
 
 Switch the directory in the terminal to the location of the notebook file.
 
-`cd "/mnt/c/Users/pgale/University of North Carolina at Chapel Hill/TarcStudyDataRepository - Files/DataPull/364-dp/Note3/dv-api-test/v5.13"`
+`cd "/mnt/c/Users/pgale/OneDrive - University of North Carolina at Chapel Hill/TARC/Code/GitHubRepos/dv-api-test/v5.13"`
 
 Start the Jupyter server using Docker.
 

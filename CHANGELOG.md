@@ -5,8 +5,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [v0.0.5] - future
+## [v0.0.5] - 2024-09-04
 
+- [x] testing updates to the `DvApiMod5.13` package
 - [x] **(IMPORTANT)** allow for passing the file upload parameters to the `addDatasetFile` method so users are not forced to us a set JSON format in their metadata
 
 ## [v0.0.4] - 2024-08-30

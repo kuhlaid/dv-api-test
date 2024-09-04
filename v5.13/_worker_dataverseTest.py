@@ -158,12 +158,12 @@ class Worker:
 
 
     # @title Delete files we no longer want to use in a new version of the dataset
-    # @arguments strNewFileList="the list name in the configuration to use for defining the files we want in the dataset"
-    def removeUnusedFiles(self,strNewFileList, strVersion):
+    # @arguments strNewFileList="the list name in the configuration to use for defining the files we want in the dataset"; strVersion=this should always be ":draft" since we are not able to delete files other than drafts
+    def removeUnusedFiles(self,strNewFileList, strVersion=":draft"):
         self.logger.info("start removeUnusedFiles")
-        lstDatasetFiles = self.getDatasetFiles(strVersion)
+        lstDatasetFiles = self.getDatasetFiles(strVersion) # retrieve the files currently found in the dataset draft
         lstNewFiles = []
-        for newFile in self._config[strNewFileList]:
+        for newFile in self._config[strNewFileList]:  # loop through the files we want to keep in the dataset draft
             lstNewFiles.append(newFile["strFileName"])
         for objFile in lstDatasetFiles:
             if 'originalFileName' in objFile: # we must check for files (such as CSV) that are converted to TAB once they are uploaded to the Dataverse and use their original file name when comparing
