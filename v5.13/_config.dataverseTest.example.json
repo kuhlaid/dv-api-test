@@ -3,6 +3,7 @@
   "strDOCKER_WORKING_DIR": "/home/jovyan/work",
   "strLOCAL_UPLOAD_DIR": "/uploads",
   "blnSHOW_DEBUG_STATEMENTS": 1,
+  "blnSHOW_CURL_COMMANDS": 0,
   "lstTEST_FILES": [
     {
       "strFileName": "sampleFile.txt",
