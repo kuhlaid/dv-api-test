@@ -157,15 +157,19 @@ class Worker:
         self.logger.info("start uploadTestFiles")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         for objFile in self._config[strTestList]:  # for each test file
-            objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
-            objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
-            # here we map our file metadata to the Dataverse API parameters for adding a file
-            objParams = dict(description=objFile["strDataDescription"],
-                directoryLabel=objFile["strDirectoryLabel"],
-                fileName=objFile["strFileName"],
-                categories=objFile["lstCatgories"])
-            self.ObjDvApi.addDatasetFile(objFile,objParams) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
+            self.prepFileUpload(objFile)
         self.logger.info("end uploadTestFiles")
+
+
+    def prepFileUpload(self, objFile):
+        objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
+        objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
+        # here we map our file metadata to the Dataverse API parameters for adding a file
+        objParams = dict(description=objFile["strDataDescription"],
+            directoryLabel=objFile["strDirectoryLabel"],
+            fileName=objFile["strFileName"],
+            categories=objFile["lstCatgories"])
+        self.ObjDvApi.addDatasetFile(objFile,objParams) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
 
     
     # @title Publish a dataset
@@ -177,22 +181,30 @@ class Worker:
         self.logger.info("end publishDatasetDraft")
 
 
-    # @title Delete files we no longer want to use in a new version of the dataset
-    # @arguments strNewFileList="the list name in the configuration to use for defining the files we want in the dataset"; strVersion=this should always be ":draft" since we are not able to delete files other than drafts
-    def removeUnusedFiles(self,strNewFileList, strVersion=":draft"):
-        self.logger.info("start removeUnusedFiles")
-        lstDatasetFiles = self.getDatasetFiles(strVersion) # retrieve the files currently found in the dataset draft
-        lstNewFiles = []
-        for newFile in self._config[strNewFileList]:  # loop through the files we want to keep in the dataset draft
-            lstNewFiles.append(newFile["strFileName"])
+    # @title Create empty dataset draft. To create an empty draft we first must try adding a file to the dataset. 
+    def createEmptyDatasetDraft(self):
+        self.logger.info("start createEmptyDatasetDraft")
+        self.readDvDatasetMetadata() # retrieve the dataset identifiers
+        # create an empty file for the dataset
+        objFile = {
+          "strFileName": "emptyFile.csv",
+          "type": "application/octet-stream",
+          "strDataDescription": "empty file",
+          "strDirectoryLabel": "data/testing",
+          "lstCatgories": []
+        }
+        pd.DataFrame.from_dict({}).to_csv(os.path.join(self.strUploadPath,objFile["strFileName"]), index=False)
+        # add the empty file to the dataset
+        self.prepFileUpload(objFile)
+        # retrieve the files currently found in the dataset draft
+        lstDatasetFiles = self.getDatasetFiles(":draft") # retrieve the files currently found in the dataset draft
+        # remove all of those files (now we can upload the files we want)
         for objFile in lstDatasetFiles:
             if 'originalFileName' in objFile: # we must check for files (such as CSV) that are converted to TAB once they are uploaded to the Dataverse and use their original file name when comparing
-                if objFile["originalFileName"] not in lstNewFiles:
-                    print("remove",objFile["originalFileName"])
-                    self.ObjDvApi.removeFile(objFile["id"])
+                print("remove",objFile["originalFileName"])
+                self.ObjDvApi.removeFile(objFile["id"])
             else:
-                if objFile["filename"] not in lstNewFiles:
-                    print("remove",objFile["filename"])
-                    self.ObjDvApi.removeFile(objFile["id"])
-        self.logger.info("end removeUnusedFiles")
+                print("remove",objFile["filename"])
+                self.ObjDvApi.removeFile(objFile["id"])
+        self.logger.info("end createEmptyDatasetDraft")
                 

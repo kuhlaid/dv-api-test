@@ -8,7 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [vxxx] - future
 
 - [ ] create a package that performs some 'starter' processing (e.g. creating a metadata starter file with the list of files, variables, etc. with '[placeholder]' values where the curator can fill in the blanks) of files someone wants to push to a repository; this would align with the code we are using and provide an example for how others can begin the curation process
+- [ ] *NOT IMPORTANT* add zip files to the test if wanting to demonstrate issues with zip file replacement
+
+## [v0.0.6] - 2024-09-05
+
 - [x] adding comments about `blnSHOW_CURL_COMMANDS` variables to disable CURL command logs
+- [x] adding a `createEmptyDatasetDraft` method which will force a clean draft state for a dataset (this is useful if you are not interested in any of the prior files saved to the dataset moving into a new version)
 
 ## [v0.0.6] - 2024-09-04
 
