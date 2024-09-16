@@ -130,9 +130,9 @@ class Worker:
 
 
     # @title Initiates the creation of a dataset
-    def createDataset(self):
+    def createDataset(self, strDatasetMetadata):
         self.logger.info("start createDataset")
-        r = self.ObjDvApi.createDataset(self._config["objDvApi_COLLECTION_START"]["alias"], self._config["objDvApi_DATASET_INIT"])
+        r = self.ObjDvApi.createDataset(self._config["objDvApi_COLLECTION_START"]["alias"], self._config[strDatasetMetadata])
         if r.status_code==201:
             objRJson = r.json()
             self.logger.info(r.json())
@@ -142,6 +142,17 @@ class Worker:
                 objConfig["strDvUrlPersistentId"] = objRJson["data"]["persistentId"]
                 jsonFile.write(json.dumps(objConfig, indent=2))
         self.logger.info("end createDataset")
+
+
+    # @title Update dataset metadata
+    def updateDatasetMetadata(self, strDatasetMetadata):
+        self.logger.info("start updateDatasetMetadata")
+        self.readDvDatasetMetadata() # retrieve the dataset identifiers
+        r = self.ObjDvApi.updateDatasetMetadata(self.objDatasetMeta["strDvUrlPersistentId"], self._config[strDatasetMetadata])
+        if r.status_code==200:
+            objRJson = r.json()
+            self.logger.info(r.json())
+        self.logger.info("end updateDatasetMetadata")
 
 
     # @title Read the dataset metadata

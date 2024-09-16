@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] create a package that performs some 'starter' processing (e.g. creating a metadata starter file with the list of files, variables, etc. with '[placeholder]' values where the curator can fill in the blanks) of files someone wants to push to a repository; this would align with the code we are using and provide an example for how others can begin the curation process
 - [ ] *NOT IMPORTANT* add zip files to the test if wanting to demonstrate issues with zip file replacement
 
+## [v0.0.7] - 2024-09-16
+
+- [x] adding `updateDatasetMetadata` method for updating the metadata for the dataset
+- [x] removing the `datasetVersion` element from the dataset metadata since it only applies to the `create dataset` API endpoint, but will cause errors if kept in place for the updating the dataset metadata
+
 ## [v0.0.6] - 2024-09-05
 
 - [x] adding comments about `blnSHOW_CURL_COMMANDS` variables to disable CURL command logs
