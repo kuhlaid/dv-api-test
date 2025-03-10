@@ -9,4 +9,5 @@ def install(package):
 # If you do not need any of the following modules then you can skip running this script in your `_worker` script
 install("Faker")    # this simply allows us to create fake data for our test files
 install("curlify")  # this allows us to see the CURL equivalent to the API requests we perform so we can send them to Dataverse support if needed
+install("pandas")   # lets us review dataset files easier
 install("git+https://github.com/kuhlaid/DvApiMod5.13")  # this will install our custom Dataverse API Python plugin
