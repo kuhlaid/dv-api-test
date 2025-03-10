@@ -1,6 +1,6 @@
 # README
 
-This directory contains the Juptyer notebook and code for performing tests against the [Dataverse Project](https://dataverse.org/) API version 5.13.
+This directory contains the Juptyer notebook and a framework for performing tests against the [Dataverse Project](https://dataverse.org/) API version 5.13. This framework simplifies common curation tasks into a reusable processes to help ensure quality assurance and is appropriate for curating any data to the Dataverse.
 
 ## Show me the action
 
