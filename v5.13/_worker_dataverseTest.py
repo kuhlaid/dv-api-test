@@ -124,6 +124,7 @@ class Worker:
             for obj in self._config[strZipConfig]["files"]:
                 if obj["strFileName"] not in myzip.namelist():  # check if a file exists within the zip archive
                     raise RuntimeError("***ERROR: Missing file "+obj["strFileName"]+" in the "+zpFolderName+".zip archive***")
+        self.strUploadPath = filePath  # revert back to original path
         print("it looks like the zip file was created successfully")
                     
       

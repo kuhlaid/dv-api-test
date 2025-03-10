@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [ ] create a package that performs some 'starter' processing (e.g. creating a metadata starter file with the list of files, variables, etc. with '[placeholder]' values where the curator can fill in the blanks) of files someone wants to push to a repository; this would align with the code we are using and provide an example for how others can begin the curation process
 
+## [v0.0.10] - 2025-03-09
+
+- [x] fixing issue with double zip not finding the zip file
+
 ## [v0.0.9] - 2025-03-09
 
 - [x] adding pandas to the install script since MyBinder needs it
