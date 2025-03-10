@@ -1,17 +1,11 @@
 from faker import Faker
 from faker.providers import profile
-import json
-import logging
-import os
+import datetime, json, logging, os, shutil, time, zipfile
 import pandas as pd
 from pandas import DataFrame
-# import shutil
 from os.path import exists
 from DvApiMod_pip_package import ObjDvApi # pull in the Dataverse API functions from our external file that we installed
 from IPython.display import HTML, display
-import time, datetime
-
-# from testAPIPkg import ObjDvApi  # local testing of Dataverse API functions
 
 handler = logging.StreamHandler()  # event logging (this needs to be outside the class otherwise it will create duplicate instances)
 
@@ -24,30 +18,36 @@ class Worker:
         f.close()
         self.eventLogger()
         self.ObjDvApi = ObjDvApi(self._config) # here we pass our notebook configuration to the ObjDvApi module and extend the functionality of this object with the ObjDvApi object
-        self.strUploadPath = self._config["strDOCKER_WORKING_DIR"]+self._config["strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
-        self.objDatasetMetaPath = os.path.join(self._config["strDOCKER_WORKING_DIR"],"dvDatasetMetadata.json")
+        self.strUploadPath = self._config["strWORKING_DIR"]+self._config["strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
+        self.objDatasetMetaPath = os.path.join(self._config["strWORKING_DIR"],"dvDatasetMetadata.json")
         self.logger.info("Finished installing and importing modules for the "+strConfigFile+" environment")
         # it is a good idea to end your functions with a print statement so you can visually see when the function ends in the notebook output
 
     
-    # @title Here we need to send our Collection information to the DvApiMod_pip_package
-    def createCollection(self):
-        self.ObjDvApi.createCollection(self._config["objDvApi_COLLECTION_START"])  # initialize a new collection
+    def createCollection(self, strInit):
+        '''
+        This method sends our Dataverse Collection information to the DvApiMod_pip_package
+
+         Parameters
+         ----------
+         strInit : string (name of the object within our _config file which defines our Dataverse Collection properties)
+        '''
+        self.ObjDvApi.createCollection(self._config[strInit])  # initialize a new collection
 
     
     # @title View a new Dataverse collection based on the collection alias
-    def viewCollection(self):
-        self.ObjDvApi.viewCollection(self._config["objDvApi_COLLECTION_START"]["alias"])  # view collection based on the alias
+    def viewCollection(self, strInit):
+        self.ObjDvApi.viewCollection(self._config[strInit]["alias"])  # view collection based on the alias
 
 
     # @title Delete a new Dataverse collection based on the collection alias
-    def deleteCollection(self):
-        self.ObjDvApi.deleteCollection(self._config["objDvApi_COLLECTION_START"]["alias"])  # delete collection based on the alias
+    def deleteCollection(self, strInit):
+        self.ObjDvApi.deleteCollection(self._config[strInit]["alias"])  # delete collection based on the alias
 
     
     # @title List Dataverse collection contents based on the collection alias
-    def viewCollectionContents(self):
-        self.ObjDvApi.viewCollectionContents(self._config["objDvApi_COLLECTION_START"]["alias"])  # list collection contents based on the alias
+    def viewCollectionContents(self, strInit):
+        self.ObjDvApi.viewCollectionContents(self._config[strInit]["alias"])  # list collection contents based on the alias
   
 
     
@@ -58,7 +58,6 @@ class Worker:
         handler.setFormatter(formatter)
         if self._config["blnSHOW_DEBUG_STATEMENTS"]:  # if we have debugging output enabled in our configuration then turn it on
             logging.getLogger().addHandler(handler) # add it to the root logger
-        # fhandler = logging.FileHandler(filename=os.path.join(self._config["strDOCKER_WORKING_DIR"],'myapp.log'), mode='a')  # note that this file handler does not use the Formatter so the date/times are not included
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel('INFO') # this needs to be here but the level does not matter
               
@@ -74,20 +73,97 @@ class Worker:
         return lstProfiles
 
 
-    # @title Generate files for the dataset
-    def createTestFiles(self, strTestList):
-        self.logger.info("start createTestFiles")
+    # Takes keys in a format like 'a.b.c'
+    def get_nested(self, data, keys):
+        if isinstance(keys, str):
+            keys = keys.split('.')
+        temp = data
+        for key in keys:
+            try:
+                temp = temp[key]
+            except (TypeError, KeyError):
+                return None
+        return temp
+    
+    
+    # @title Remove the archive we create as a temporary placeholder
+    def removeTempArchive(self,strFilePath):
+        print("removeTempArchive")
+        isExisting = os.path.isfile(strFilePath)  # check if archive exists
+        if (isExisting):
+            print("removing temp archive "+strFilePath)
+            os.remove(strFilePath)    # remove temp archive
+            time.sleep(0.5) # try to ensure the archive is removed before moving on
+        print("end removeTempArchive")
+
+    '''
+
+    '''
+    def createZipFile(self, strZipConfig):
+        self.logger.info("start createZipFile")
         if not os.path.exists(self.strUploadPath):
-            os.mkdir(self.strUploadPath)  # create file path if not exists for storing our sample data
-        for obj in self._config[strTestList]:
+            os.mkdir(self.strUploadPath)
+        filePath=self.strUploadPath
+        zp=os.path.join(self.strUploadPath,self._config[strZipConfig]["strFileName"]) # zip path
+        zpFolderName = self._config[strZipConfig]["strFileName"].replace(".zip", "")
+        zpFolderPath=os.path.join(self.strUploadPath,zpFolderName)
+        if not os.path.exists(zpFolderPath):  # create folder for archive files
+            os.mkdir(zpFolderPath)
+        
+        self.strUploadPath = zpFolderPath
+        self.createTextFiles(strZipConfig+".files")  # create archive contents
+            
+        isExisting = os.path.isfile(zp)  # check if the archive exists
+        if (not isExisting):
+            print("create zip archive for",zpFolderName)
+            shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath,zpFolderName), base_dir="") # this only archives the files found within the archive directory
+            # shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath), base_dir=zpFolderName) # this includes the directory AND files under that directory within archive, but we only want the files
+
+
+        with zipfile.PyZipFile(zp, 'r') as myzip:
+            for obj in self._config[strZipConfig]["files"]:
+                if obj["strFileName"] not in myzip.namelist():  # check if a file exists within the zip archive
+                    raise RuntimeError("***ERROR: Missing file "+obj["strFileName"]+" in the "+zpFolderName+".zip archive***")
+        print("it looks like the zip file was created successfully")
+                    
+      
+    '''
+    Zip (archive) files uploaded to the Dataverse are treated differently depending on whether the zip is "double zipped" or not. Double zipping a file will prevent the Dataverse from extracting the archive contents when it is uploaded to a dataset. If you do not double zip an archive then the archive contents will unzip when uploaded to the Dataverse and only the archive  contents will be listed in the dataset (not the zip file itself). However, once a double zipped file is uploaded to a Dataverse dataset, it is conveted to single zipped (so anyone downloading the file will receive a single zipped file). Keep this in mind when working with archive files to decide if you need to double zip your archive or not.
+    We will name double zipped files `.zip.zip` to distinguish between single zip `.zip`.
+    '''
+    def doubleZip(self, strZipConfig):
+        print("start doubleZip")
+        zp=os.path.join(self.strUploadPath,self._config[strZipConfig]["strFileName"]) # zip path
+        self.removeTempArchive(zp+".tmpzip")  # remove temp archive
+        with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip1:  # create a placeholder temporary file first
+            pass
+
+        # double zip the file into a temporary zip
+        with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip2:
+            myzip2.write(zp,self._config[strZipConfig]["strFileName"]+".zip")
+            time.sleep(0.5) # try to ensure the archive is created before moving on
+            pass
+        shutil.copyfile(zp+".tmpzip", zp+".zip") # finally we copy the double-zipped archive temp file to the main archive
+        self.removeTempArchive(zp+".tmpzip") # we remove the temp zip file
+        print("end double zip")
+            
+
+    # @title Generate text files for the dataset
+    def createTextFiles(self, strTestList):
+        self.logger.info("start createTextFiles")
+        if not os.path.exists(self.strUploadPath):
+            os.mkdir(self.strUploadPath)  # create file path if not exists for storing our sample data (this directory is included in the repository since creating directories through Python is not allowed in some environments and must be done manually)
+        for obj in self.get_nested(self._config, strTestList):
             if "blnJsonToCsv" in obj and obj["blnJsonToCsv"] == "true":
                 objJson = self.createSampleData() # create sample data and save to a CSV file
                 pd.DataFrame.from_dict(objJson).to_csv(os.path.join(self.strUploadPath,obj["strFileName"]), index=False)
+                self.logger.info("created file: "+obj["strFileName"])
             else:
                 with open(os.path.join(self.strUploadPath,obj["strFileName"]), mode='w') as objFile:
                     objFile.write(json.dumps(self.createSampleData(), indent=2))
                     objFile.close() # *** WE MUST CLOSE THE FILE AFTER CREATING IT OTHERWISE WE WILL NOT BE ABLE TO OPEN THE FILE FOR UPLOAD ***
-        self.logger.info("end createTestFiles")
+                self.logger.info("created file: "+obj["strFileName"])
+        self.logger.info("end createTextFiles")
 
 
     # @title Delete the dataset defined for this notebook (we cannot call deleteDatasetDraft from the notebook since we need to pass the dataset ID to the method) 
@@ -130,9 +206,9 @@ class Worker:
 
 
     # @title Initiates the creation of a dataset
-    def createDataset(self, strDatasetMetadata):
+    def createDataset(self, strCollection, strDatasetMetadata):
         self.logger.info("start createDataset")
-        r = self.ObjDvApi.createDataset(self._config["objDvApi_COLLECTION_START"]["alias"], self._config[strDatasetMetadata])
+        r = self.ObjDvApi.createDataset(self._config[strCollection]["alias"], self._config[strDatasetMetadata])
         if r.status_code==201:
             objRJson = r.json()
             self.logger.info(r.json())
@@ -164,17 +240,19 @@ class Worker:
     
     # @title Upload files to the dataset
     # @arguments strTestList="the list name in the configuration to use for uploading files"
-    def uploadTestFiles(self, strTestList):
-        self.logger.info("start uploadTestFiles")
+    def uploadFiles(self, strTestList):
+        self.logger.info("start uploadFiles")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         for objFile in self._config[strTestList]:  # for each test file
             self.prepFileUpload(objFile)
-        self.logger.info("end uploadTestFiles")
+        self.logger.info("end uploadFiles")
 
 
     def prepFileUpload(self, objFile):
         objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
         objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
+        if objFile["strDvUrlPersistentId"] == "":
+            raise RuntimeError("***ERROR: No dataset id found. Try running the createDataset method (there should be data in the dvDatasetMetadata.json file before uploading will work.***")
         # here we map our file metadata to the Dataverse API parameters for adding a file
         objParams = dict(description=objFile["strDataDescription"],
             directoryLabel=objFile["strDirectoryLabel"],
@@ -184,11 +262,11 @@ class Worker:
 
     
     # @title Publish a dataset
-    def publishDatasetDraft(self, strType="minor"):
+    def publishDatasetDraft(self, strCollection, strType="minor"):
         self.logger.info("start publishDatasetDraft")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         objDatasetMeta = self.objDatasetMeta
-        self.ObjDvApi.publishDatasetDraft(objDatasetMeta,strType, self._config["objDvApi_COLLECTION_START"]["alias"])
+        self.ObjDvApi.publishDatasetDraft(objDatasetMeta,strType, self._config[strCollection]["alias"])
         self.logger.info("end publishDatasetDraft")
 
 
