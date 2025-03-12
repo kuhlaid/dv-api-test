@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - [x] added 'current' Dataverse domain and token strings to the prompt for configuration updates
 - [x] changing `root` to `:root` in the config
+- [x] removing MIT license since it is not supported and does not apply to all use-cases
 
 ## [v1.0.0] - 2025-03-12
 

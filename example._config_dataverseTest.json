@@ -209,8 +209,8 @@
   },
   "objDvApi_DATASET_INIT": {
     "license": {
-      "name": "MIT",
-      "uri": "https://opensource.org/license/mit"
+      "name": "CC BY 4.0",
+      "uri": "http://creativecommons.org/licenses/by/4.0"
     },
     "metadataBlocks": {
       "citation": {
@@ -1667,8 +1667,8 @@
   },
   "objDvApi_DATASET_UPDATE": {
     "license": {
-      "name": "MIT",
-      "uri": "https://opensource.org/license/mit"
+      "name": "CC BY 4.0",
+      "uri": "http://creativecommons.org/licenses/by/4.0"
     },
     "metadataBlocks": {
       "citation": {
