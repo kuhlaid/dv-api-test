@@ -117,7 +117,9 @@ This takes a zip file an double zips it.
 
 ### objWorker.uploadFiles([name of config list - e.g. `lstTEST_FILES`])
 
-This uploads a list of files defined in the `_config`.
+**NOTE: It is strongly recommended that you run the `createEmptyDatasetDraft()` method before uploading files if you are receiving file upload errors. See the notes on `createEmptyDatasetDraft()` later in this document for more information. If you are receiving file upload errors, running `createEmptyDatasetDraft()` will likely resolve this issue.**
+
+This uploads a list of files defined in the `_config` to the dataset.
 
 When we upload a file to a dataset, it is advisable to check the MD5 hash of the file you are attempting to upload. Our `ObjDvApi` class handles this for you. If the MD5 hash is the same and you upload the file to the dataset, then a new file will be added to the dataset with a file name ending in a number. Thus you will end up with two duplicate files in the dataset with two different names (which you should not do). We have added an MD5 hash checking method to our `ObjDvApi` class that will check for matching MD5 hashes and will use the `file replace` API if files already exist in the dataset. Hence another good reason to use this Notebook code.
 

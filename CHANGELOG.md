@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.2] - 2025-03-12
+
+- [x] additional testing revealed issue with trying to perform the 'uploadFile' method on a double zipped file if one already exists in the dataset (adding language to strongly recommend creating an empty dataset if there are issues uploading files to a dataset)
+- [x] simplified the _config file setup by only prompting users for their Dataverse API token
+- [x] resetting the upload path for files if any method changes it
+- [x] removing existing zip files on creation in the event the existing one is corrupted
+  
 ## [v1.0.1] - 2025-03-12
 
 - [x] added 'current' Dataverse domain and token strings to the prompt for configuration updates

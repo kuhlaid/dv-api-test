@@ -79,8 +79,8 @@ class ConfigCheck:
         print("Dataverse API token currently set:",self._config["_cc__strDvApi_TOKEN"])
         print("Dataverse domain currently set:",self._config["_cc__strDvApi_DOMAIN"])
         txtToken=input('Dataverse API token:')
-        txtDomain=input('Dataverse domain:')
-        self._config["_cc__strDvApi_DOMAIN"]=txtDomain
+        # txtDomain=input('Dataverse domain:')
+        # self._config["_cc__strDvApi_DOMAIN"]=txtDomain
         self._config["_cc__strDvApi_TOKEN"]=txtToken
         self.checkDataverseToken()
        
@@ -109,10 +109,17 @@ class Worker:
         f.close()
         self.eventLogger()
         self.ObjDvApi = ObjDvApi(self._config) # here we pass our notebook configuration to the ObjDvApi module and extend the functionality of this object with the ObjDvApi object
-        self.strUploadPath = self._config["_cc__strWORKING_DIR"]+self._config["_cc__strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
+        self.resetUploadPath()
         self.objDatasetMetaPath = os.path.join(self._config["_cc__strWORKING_DIR"],"_cc__DvDatasetMetadata.json")
         self.logger.info("Finished installing and importing modules for the "+strConfigFile+" environment")
         # it is a good idea to end your functions with a print statement so you can visually see when the function ends in the notebook output
+
+
+    def resetUploadPath(self):
+        '''
+        Anytime we are doing things with files with regards to upload path, we need to run this method to reset the path to default upload path so we do not inadvertently use a path for a file that is not applicable.
+        '''
+        self.strUploadPath = self._config["_cc__strWORKING_DIR"]+self._config["_cc__strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
 
     
     def createCollection(self, strInit):
@@ -222,7 +229,7 @@ class Worker:
 
     def createZipFile(self, strZipConfig):
         '''
-        Create an archive file.
+        Create an archive file. Remove the old file first if one exists in the event it may be corrupted.
         
          Parameters
          ----------
@@ -233,6 +240,7 @@ class Worker:
             os.mkdir(self.strUploadPath)
         filePath=self.strUploadPath
         zp=os.path.join(self.strUploadPath,self._config[strZipConfig]["strFileName"]) # zip path
+        self.removeTempArchive(zp)
         zpFolderName = self._config[strZipConfig]["strFileName"].replace(".zip", "")
         zpFolderPath=os.path.join(self.strUploadPath,zpFolderName)
         if not os.path.exists(zpFolderPath):  # create folder for archive files
@@ -244,11 +252,33 @@ class Worker:
             print("create zip archive for",zpFolderName)
             shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath,zpFolderName), base_dir="") # this only archives the files found within the archive directory
             # shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath), base_dir=zpFolderName) # this includes the directory AND files under that directory within archive, but we only want the files for our example
-        with zipfile.PyZipFile(zp, 'r') as myzip:
-            for obj in self._config[strZipConfig]["files"]:
-                if obj["strFileName"] not in myzip.namelist():  # check if a file exists within the zip archive
-                    raise RuntimeError("***ERROR: Missing file "+obj["strFileName"]+" in the "+zpFolderName+".zip archive***")
-        self.strUploadPath = filePath  # revert back to original path
+
+        # Wait for the zip file to be fully written (check file size)
+        initial_size = 0
+        while True:
+            try:
+                current_size = os.path.getsize(zp)
+                if current_size == initial_size and current_size > 0:
+                    break  # File size has stabilized, assuming zipping is done
+                else:
+                    initial_size = current_size
+                    time.sleep(0.1)  # Check every 100ms
+            except FileNotFoundError:
+                print("FileNotFoundError")
+                time.sleep(0.1) #File not yet created, wait and check again
+        
+        try: # make sure we can access the zip file content
+            with zipfile.PyZipFile(zp, 'r') as myzip:
+                for obj in self._config[strZipConfig]["files"]:
+                    if obj["strFileName"] not in myzip.namelist():  # check if a file exists within the zip archive
+                        raise RuntimeError("***ERROR: Missing file "+obj["strFileName"]+" in the "+zpFolderName+".zip archive***")
+        except FileNotFoundError:
+            print("Error: One or more files not found.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+    
+        
+        self.resetUploadPath()
         print("it looks like the zip file was created successfully")
                     
 
