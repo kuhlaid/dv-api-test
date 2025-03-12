@@ -76,6 +76,8 @@ class ConfigCheck:
         Build a simple form to update the Notebook configuration before checking the connection to the Dataverse API.
         '''
         print("You Notebook configuration is incorrect. Please enter a valid Dataverse API token and domain below.")
+        print("Dataverse API token currently set:",self._config["_cc__strDvApi_TOKEN"])
+        print("Dataverse domain currently set:",self._config["_cc__strDvApi_DOMAIN"])
         txtToken=input('Dataverse API token:')
         txtDomain=input('Dataverse domain:')
         self._config["_cc__strDvApi_DOMAIN"]=txtDomain
@@ -346,7 +348,10 @@ class Worker:
         self.logger.info("start viewDatasetFiles")
         lstDataFiles = self.getDatasetFiles(strVersion)
         dfData = pd.DataFrame(lstDataFiles)
-        display(HTML(dfData[["id", "filename", "description"]].to_html())) # print out a nice table listing the files
+        if dfData.empty==True:
+            print("It appears the dataset is empty. Try adding some files to the dataset first.")
+        else:
+            display(HTML(dfData[["id", "filename", "description"]].to_html())) # print out a nice table listing the files
         self.logger.info("end viewDatasetFiles")
 
 
