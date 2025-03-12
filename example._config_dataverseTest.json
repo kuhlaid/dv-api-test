@@ -3,7 +3,7 @@
   "_cc__strWORKING_DIR": "",
   "_cc__strLOCAL_UPLOAD_DIR": "uploads",
   "_cc__strDvApi_DOMAIN": "https://demo.dataverse.org",
-  "_cc__strDvApi_PARENT_COLLECTION": "root",
+  "_cc__strDvApi_PARENT_COLLECTION": ":root",
   "_cc__strDvApi_TOKEN": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "_cc__blnSHOW_DEBUG_STATEMENTS": 1,
   "_cc__blnSHOW_CURL_COMMANDS": 0,
