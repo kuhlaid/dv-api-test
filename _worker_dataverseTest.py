@@ -1,32 +1,121 @@
 from faker import Faker
 from faker.providers import profile
-import datetime, json, logging, os, shutil, time, zipfile
+import datetime, ipywidgets as widgets, json, logging, os, requests, shutil, time, zipfile
 import pandas as pd
+from functools import partial
 from pandas import DataFrame
 from os.path import exists
 from DvApiMod_pip_package import ObjDvApi # pull in the Dataverse API functions from our external file that we installed
-from IPython.display import HTML, display
+from IPython.display import HTML, display, clear_output
 
 handler = logging.StreamHandler()  # event logging (this needs to be outside the class otherwise it will create duplicate instances)
 
-# @title By placing all of our Python function within a class object, it makes it much easier for information to be used across functions without needing to explicitly passing them into each function (instead we pass the entire Worker object into the functions so each function can do what it needs with the object)
-class Worker:
-    # @param strEnvironment (ex. demo or prod, would represent the environment you wish for the notebook code to run against)
+def ClearOutput(strNotice=""):
+    '''
+    Run this function to 'reset' any code output and replace it with the `strNotice` value.
+
+     Parameters
+     ----------
+     strNotice : string (Any string such as "Your configuration is complete" to use for replacing code output.)
+    '''
+    clear_output(wait=True)
+    print(strNotice)
+
+    
+class ConfigCheck:
+    '''
+    This object handles checking the Notebook configuration for valid Dataverse API settings.
+    '''
     def __init__(self,strConfigFile):
+        '''
+        This method initializes our Notebook configuration validator.
+
+         Parameters
+         ----------
+         strConfigFile : string ("_config_dataverseTest.json" the filename we will give to our Notebook configuration)
+        '''
+        self.blnApiConfig = False
+        self.strConfigFile=strConfigFile
+        blnConfigExisting = self.blnConfigExisting(strConfigFile)  # check if the configuration file exists
+        if (not blnConfigExisting):
+            shutil.copyfile("example._config_dataverseTest.json", strConfigFile)# create a copy of the existing config file
+            blnConfigExisting = self.blnConfigExisting(strConfigFile)
+        if (blnConfigExisting): # check again for the config file
+            f = open (strConfigFile, "r") # read the notebook configuration settings
+            self._config = json.loads(f.read())
+            f.close()
+            ClearOutput("Installs completed")
+        self.checkDataverseToken()
+
+
+    def checkDataverseToken(self):
+        '''
+        This method queries the Dataverse API to simply check the token expiration and verify the configuration is correct for the Dataverse API.
+        '''
+        # ClearOutput() # NOTE: DO NOT run ClearOutput after the `input()` function is called otherwise the input() will not be visible the next time it is run (so we need to keep showing the output at this point until the configuration is valid)
+        strApiEndpoint = '%s/api/users/token' % self._config["_cc__strDvApi_DOMAIN"]
+        # print('making request: %s:%s' % (strApiEndpoint, self._config["_cc__strDvApi_TOKEN"]))
+        objHeaders = {
+            "Content-Type": "application/json",
+            "X-Dataverse-Key": self._config["_cc__strDvApi_TOKEN"]
+        }
+        r = requests.request("GET", strApiEndpoint, headers=objHeaders) # it is nice I can simply send the JSON object without the need to create a separate JSON file
+        rObj = r.json()
+        if "ERROR" not in rObj["status"]:
+            self.blnApiConfig=True
+            with open(self.strConfigFile, mode='w') as objConfig: # save any config changes
+                objConfig.write(json.dumps(self._config, indent=2))
+                objConfig.close() # *** WE MUST CLOSE THE FILE AFTER CREATING IT OTHERWISE WE WILL NOT BE ABLE TO OPEN THE FILE FOR UPLOAD ***
+            ClearOutput("Your Dataverse API configuration looks good")
+        else:
+            self.createDvConnectionForm() # there was an error with the Dataverse API configuration so we load the configuration form
+            
+
+    def createDvConnectionForm(self):
+        '''
+        Build a simple form to update the Notebook configuration before checking the connection to the Dataverse API.
+        '''
+        print("You Notebook configuration is incorrect. Please enter a valid Dataverse API token and domain below.")
+        txtToken=input('Dataverse API token:')
+        txtDomain=input('Dataverse domain:')
+        self._config["_cc__strDvApi_DOMAIN"]=txtDomain
+        self._config["_cc__strDvApi_TOKEN"]=txtToken
+        self.checkDataverseToken()
+       
+
+    def blnConfigExisting(self, strConfigFile):
+        '''
+        Check if the configuration file exists.
+        '''
+        return os.path.isfile(strConfigFile)
+    
+
+class Worker:
+    '''
+    This object handles our Notebook code after configuration is complete.
+    '''
+    def __init__(self,strConfigFile):
+        '''
+        This method initializes our Worker object.
+
+         Parameters
+         ----------
+         strConfigFile : string ("_config_dataverseTest.json" the filename we gave the Notebook configuration)
+        '''
         f = open (strConfigFile, "r") # read the notebook configuration settings
         self._config = json.loads(f.read())
         f.close()
         self.eventLogger()
         self.ObjDvApi = ObjDvApi(self._config) # here we pass our notebook configuration to the ObjDvApi module and extend the functionality of this object with the ObjDvApi object
-        self.strUploadPath = self._config["strWORKING_DIR"]+self._config["strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
-        self.objDatasetMetaPath = os.path.join(self._config["strWORKING_DIR"],"dvDatasetMetadata.json")
+        self.strUploadPath = self._config["_cc__strWORKING_DIR"]+self._config["_cc__strLOCAL_UPLOAD_DIR"] # creating this because we will reuse it several places
+        self.objDatasetMetaPath = os.path.join(self._config["_cc__strWORKING_DIR"],"_cc__DvDatasetMetadata.json")
         self.logger.info("Finished installing and importing modules for the "+strConfigFile+" environment")
         # it is a good idea to end your functions with a print statement so you can visually see when the function ends in the notebook output
 
     
     def createCollection(self, strInit):
         '''
-        This method sends our Dataverse Collection information to the DvApiMod_pip_package
+        This method sends our Dataverse Collection information to the DvApiMod_pip_package.
 
          Parameters
          ----------
@@ -34,47 +123,73 @@ class Worker:
         '''
         self.ObjDvApi.createCollection(self._config[strInit])  # initialize a new collection
 
-    
-    # @title View a new Dataverse collection based on the collection alias
+
     def viewCollection(self, strInit):
+        '''
+        View a new Dataverse collection based on the collection alias.
+
+         Parameters
+         ----------
+         strInit : string (name of the object within our _config file which defines our Dataverse Collection properties)
+        '''
         self.ObjDvApi.viewCollection(self._config[strInit]["alias"])  # view collection based on the alias
 
 
-    # @title Delete a new Dataverse collection based on the collection alias
     def deleteCollection(self, strInit):
+        '''
+        Delete a new Dataverse collection based on the collection alias.
+
+         Parameters
+         ----------
+         strInit : string (name of the object within our _config file which defines our Dataverse Collection properties)
+        '''
         self.ObjDvApi.deleteCollection(self._config[strInit]["alias"])  # delete collection based on the alias
 
-    
-    # @title List Dataverse collection contents based on the collection alias
+ 
     def viewCollectionContents(self, strInit):
+        '''
+        List Dataverse collection contents based on the collection alias.
+
+         Parameters
+         ----------
+         strInit : string (name of the object within our _config file which defines our Dataverse Collection properties)
+        '''
         self.ObjDvApi.viewCollectionContents(self._config[strInit]["alias"])  # list collection contents based on the alias
   
 
-    
-    # @title This will set our system logging messages, which can be turned off in the configuration if desired
     def eventLogger(self):
-        # time.time()-14400 # this is a hack for Windows computers on EST time (4 hours or 14400 seconds behind)
+        '''
+        This will set our system logging messages, which can be turned off in the configuration if desired.
+        '''
         formatter = logging.Formatter(datetime.datetime.fromtimestamp(time.time()-14400).strftime('%Y-%m-%d %H:%M:%S EST') + ' %(name)s [%(levelname)s] %(message)s') # define how we want to messages formatted (starting with the current time, script name, type of message, and message
         handler.setFormatter(formatter)
-        if self._config["blnSHOW_DEBUG_STATEMENTS"]:  # if we have debugging output enabled in our configuration then turn it on
+        if self._config["_cc__blnSHOW_DEBUG_STATEMENTS"]:  # if we have debugging output enabled in our configuration then turn it on
             logging.getLogger().addHandler(handler) # add it to the root logger
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel('INFO') # this needs to be here but the level does not matter
               
-                
-    # @title Generate fake data for testing
+
     def createSampleData(self):
+        '''
+        Generate fake data for testing.
+        '''
         fake = Faker('en_US')
         fake.add_provider(profile)
         lstProfiles = []
         for _ in range(5):  # create five fake profile records 
             lstProfiles.append(fake.profile(['name','username','address','mail']))
-        # self.logger.info(lstProfiles)
         return lstProfiles
 
 
-    # Takes keys in a format like 'a.b.c'
     def get_nested(self, data, keys):
+        '''
+        Takes keys in a format like 'a.b.c' to more easily access dict/object properties dynamically.
+        
+         Parameters
+         ----------
+         data : object/dict
+         keys : string (format like 'a.b.c' where each property in the tree is separated by a `.`)
+        '''
         if isinstance(keys, str):
             keys = keys.split('.')
         temp = data
@@ -86,8 +201,14 @@ class Worker:
         return temp
     
     
-    # @title Remove the archive we create as a temporary placeholder
     def removeTempArchive(self,strFilePath):
+        '''
+        Remove the archive we create as a temporary placeholder when building zip files.
+        
+         Parameters
+         ----------
+         strFilePath : string (path to the file we wish to delete)
+        '''
         print("removeTempArchive")
         isExisting = os.path.isfile(strFilePath)  # check if archive exists
         if (isExisting):
@@ -96,10 +217,15 @@ class Worker:
             time.sleep(0.5) # try to ensure the archive is removed before moving on
         print("end removeTempArchive")
 
-    '''
 
-    '''
     def createZipFile(self, strZipConfig):
+        '''
+        Create an archive file.
+        
+         Parameters
+         ----------
+         strZipConfig : string (reference to the zip file object name defined in the Notebook _config)
+        '''
         self.logger.info("start createZipFile")
         if not os.path.exists(self.strUploadPath):
             os.mkdir(self.strUploadPath)
@@ -109,17 +235,13 @@ class Worker:
         zpFolderPath=os.path.join(self.strUploadPath,zpFolderName)
         if not os.path.exists(zpFolderPath):  # create folder for archive files
             os.mkdir(zpFolderPath)
-        
         self.strUploadPath = zpFolderPath
-        self.createTextFiles(strZipConfig+".files")  # create archive contents
-            
+        self.createTextFiles(strZipConfig+".files")  # create archive contents 
         isExisting = os.path.isfile(zp)  # check if the archive exists
         if (not isExisting):
             print("create zip archive for",zpFolderName)
             shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath,zpFolderName), base_dir="") # this only archives the files found within the archive directory
-            # shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath), base_dir=zpFolderName) # this includes the directory AND files under that directory within archive, but we only want the files
-
-
+            # shutil.make_archive(os.path.join(os.getcwd(),filePath,zpFolderName), 'zip', root_dir=os.path.join(os.getcwd(),filePath), base_dir=zpFolderName) # this includes the directory AND files under that directory within archive, but we only want the files for our example
         with zipfile.PyZipFile(zp, 'r') as myzip:
             for obj in self._config[strZipConfig]["files"]:
                 if obj["strFileName"] not in myzip.namelist():  # check if a file exists within the zip archive
@@ -127,20 +249,22 @@ class Worker:
         self.strUploadPath = filePath  # revert back to original path
         print("it looks like the zip file was created successfully")
                     
-      
-    '''
-    Zip (archive) files uploaded to the Dataverse are treated differently depending on whether the zip is "double zipped" or not. Double zipping a file will prevent the Dataverse from extracting the archive contents when it is uploaded to a dataset. If you do not double zip an archive then the archive contents will unzip when uploaded to the Dataverse and only the archive  contents will be listed in the dataset (not the zip file itself). However, once a double zipped file is uploaded to a Dataverse dataset, it is conveted to single zipped (so anyone downloading the file will receive a single zipped file). Keep this in mind when working with archive files to decide if you need to double zip your archive or not.
-    We will name double zipped files `.zip.zip` to distinguish between single zip `.zip`.
-    '''
+
     def doubleZip(self, strZipConfig):
+        '''
+        Zip (archive) files uploaded to the Dataverse are treated differently depending on whether the zip is "double zipped" or not. Double zipping a file will prevent the Dataverse from extracting the archive contents when it is uploaded to a dataset. If you do not double zip an archive then the archive contents will unzip when uploaded to the Dataverse and only the archive  contents will be listed in the dataset (not the zip file itself). However, once a double zipped file is uploaded to a Dataverse dataset, it is conveted to single zipped (so anyone downloading the file will receive a single zipped file). Keep this in mind when working with archive files to decide if you need to double zip your archive or not.
+    We will name double zipped files `.zip.zip` to distinguish between single zip `.zip`.
+        
+         Parameters
+         ----------
+         strZipConfig : string (reference to the zip file object name defined in the Notebook _config)
+        '''
         print("start doubleZip")
         zp=os.path.join(self.strUploadPath,self._config[strZipConfig]["strFileName"]) # zip path
         self.removeTempArchive(zp+".tmpzip")  # remove temp archive
         with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip1:  # create a placeholder temporary file first
             pass
-
-        # double zip the file into a temporary zip
-        with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip2:
+        with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip2:  # double zip the file into a temporary zip
             myzip2.write(zp,self._config[strZipConfig]["strFileName"]+".zip")
             time.sleep(0.5) # try to ensure the archive is created before moving on
             pass
@@ -149,8 +273,14 @@ class Worker:
         print("end double zip")
             
 
-    # @title Generate text files for the dataset
     def createTextFiles(self, strTestList):
+        '''
+        Generate text files for the dataset.
+        
+         Parameters
+         ----------
+         strTestList : string (reference to the list of files defined in the Notebook _config that we want created)
+        '''
         self.logger.info("start createTextFiles")
         if not os.path.exists(self.strUploadPath):
             os.mkdir(self.strUploadPath)  # create file path if not exists for storing our sample data (this directory is included in the repository since creating directories through Python is not allowed in some environments and must be done manually)
@@ -167,13 +297,14 @@ class Worker:
         self.logger.info("end createTextFiles")
 
 
-    # @title Delete the dataset defined for this notebook (we cannot call deleteDatasetDraft from the notebook since we need to pass the dataset ID to the method) 
     def deleteDataset(self):
+        '''
+        Delete the dataset defined for this notebook (we cannot call deleteDatasetDraft from the notebook since we need to pass the dataset ID to the method) .
+        '''
         self.logger.info("start deleteDataset")
         self.readDvDatasetMetadata()
         if self.objDatasetMeta["strDvDATASET_ID"] == "":
             raise RuntimeError("***ERROR: No dataset id found.***")
-    
         self.ObjDvApi.deleteDatasetDraft(self.objDatasetMeta["strDvDATASET_ID"])
         with open(self.objDatasetMetaPath, mode='w') as jsonFile:
                 objConfig = {"strAbout": ""}
@@ -184,6 +315,13 @@ class Worker:
 
 
     def getDatasetFiles(self, strVersion):
+        '''
+        Retrieve the list of files from a dataset.
+        
+         Parameters
+         ----------
+         strVersion : string (reference to the version of a dataset we want to see the files for)
+        '''
         self.logger.info("start getDatasetFiles")
         self.readDvDatasetMetadata()
         if self.objDatasetMeta["strDvDATASET_ID"] == "":
@@ -196,9 +334,15 @@ class Worker:
         return lstDataFiles
         self.logger.info("end getDatasetFiles")
 
-        
-    # @title View dataset files
+
     def viewDatasetFiles(self, strVersion):
+        '''
+        Display dataset files.
+        
+         Parameters
+         ----------
+         strVersion : string (reference to the version of a dataset we want to see the files for)
+        '''
         self.logger.info("start viewDatasetFiles")
         lstDataFiles = self.getDatasetFiles(strVersion)
         dfData = pd.DataFrame(lstDataFiles)
@@ -206,8 +350,15 @@ class Worker:
         self.logger.info("end viewDatasetFiles")
 
 
-    # @title Initiates the creation of a dataset
     def createDataset(self, strCollection, strDatasetMetadata):
+        '''
+        Initiates the creation of a dataset.
+        
+         Parameters
+         ----------
+         strCollection : string (reference to the collection object within the Notebook _config)
+         strDatasetMetadata : string (reference to the dataset metadata object within the Notebook _config)
+        '''
         self.logger.info("start createDataset")
         r = self.ObjDvApi.createDataset(self._config[strCollection]["alias"], self._config[strDatasetMetadata])
         if r.status_code==201:
@@ -221,8 +372,14 @@ class Worker:
         self.logger.info("end createDataset")
 
 
-    # @title Update dataset metadata
     def updateDatasetMetadata(self, strDatasetMetadata):
+        '''
+        Update the dataset metadata.
+        
+         Parameters
+         ----------
+         strDatasetMetadata : string (reference to the dataset metadata object within the Notebook _config)
+        '''
         self.logger.info("start updateDatasetMetadata")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         r = self.ObjDvApi.updateDatasetMetadata(self.objDatasetMeta["strDvUrlPersistentId"], self._config[strDatasetMetadata])
@@ -232,16 +389,23 @@ class Worker:
         self.logger.info("end updateDatasetMetadata")
 
 
-    # @title Read the dataset metadata
     def readDvDatasetMetadata(self):
+        '''
+        Read the basic dataset identity metadata.
+        '''
         f = open(self.objDatasetMetaPath, "r")
         self.objDatasetMeta = json.loads(f.read())
         f.close()
-
     
-    # @title Upload files to the dataset
-    # @arguments strTestList="the list name in the configuration to use for uploading files"
+
     def uploadFiles(self, strTestList):
+        '''
+        Upload files to the dataset.
+
+         Parameters
+         ----------
+         strTestList : string (name of the object within our _config file which defines our list of files to upload)
+        '''
         self.logger.info("start uploadFiles")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         for objFile in self._config[strTestList]:  # for each test file
@@ -250,10 +414,17 @@ class Worker:
 
 
     def prepFileUpload(self, objFile):
+        '''
+        Add files to the dataset.
+
+         Parameters
+         ----------
+         objFile : dict (file metadata defined in the Notebook _config)
+        '''
         objFile["strUploadPath"] = self.strUploadPath # we add a few extra properties to the object before sending it to the addDatasetFile method
         objFile["strDvUrlPersistentId"] = self.objDatasetMeta["strDvUrlPersistentId"]
         if objFile["strDvUrlPersistentId"] == "":
-            raise RuntimeError("***ERROR: No dataset id found. Try running the createDataset method (there should be data in the dvDatasetMetadata.json file before uploading will work.***")
+            raise RuntimeError("***ERROR: No dataset id found. Try running the createDataset method (there should be data in the _cc__DvDatasetMetadata.json file before uploading will work.***")
         # here we map our file metadata to the Dataverse API parameters for adding a file
         objParams = dict(description=objFile["strDataDescription"],
             directoryLabel=objFile["strDirectoryLabel"],
@@ -261,9 +432,16 @@ class Worker:
             categories=objFile["lstCatgories"])
         self.ObjDvApi.addDatasetFile(objFile,objParams) # we simply pass the objFile so we can use the configuration file to determine the elements linked to the object (spare us from altering the arguments of the addDatasetFile method
 
-    
-    # @title Publish a dataset
+
     def publishDatasetDraft(self, strCollection, strType="minor"):
+        '''
+        Publish a dataset.
+
+         Parameters
+         ----------
+         strCollection : string (reference to the collection object within the Notebook _config)
+         strType : string ("minor" or "major" version update)
+        '''
         self.logger.info("start publishDatasetDraft")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         objDatasetMeta = self.objDatasetMeta
@@ -271,8 +449,10 @@ class Worker:
         self.logger.info("end publishDatasetDraft")
 
 
-    # @title Create empty dataset draft. To create an empty draft we first must try adding a file to the dataset. 
     def createEmptyDatasetDraft(self):
+        '''
+        Create empty dataset draft. To create an empty draft we first must try adding a temporary file to the dataset. 
+        '''
         self.logger.info("start createEmptyDatasetDraft")
         self.readDvDatasetMetadata() # retrieve the dataset identifiers
         # create an empty file for the dataset
@@ -283,13 +463,10 @@ class Worker:
           "strDirectoryLabel": "data/testing",
           "lstCatgories": []
         }
-        pd.DataFrame.from_dict({}).to_csv(os.path.join(self.strUploadPath,objFile["strFileName"]), index=False)
-        # add the empty file to the dataset
-        self.prepFileUpload(objFile)
-        # retrieve the files currently found in the dataset draft
+        pd.DataFrame.from_dict({}).to_csv(os.path.join(self.strUploadPath,objFile["strFileName"]), index=False)   
+        self.prepFileUpload(objFile)  # add the empty file to the dataset
         lstDatasetFiles = self.getDatasetFiles(":draft") # retrieve the files currently found in the dataset draft
-        # remove all of those files (now we can upload the files we want)
-        for objFile in lstDatasetFiles:
+        for objFile in lstDatasetFiles:  # remove all of those files (now we can upload the files we want)
             if 'originalFileName' in objFile: # we must check for files (such as CSV) that are converted to TAB once they are uploaded to the Dataverse and use their original file name when comparing
                 print("remove",objFile["originalFileName"])
                 self.ObjDvApi.removeFile(objFile["id"])

@@ -8,9 +8,7 @@ See the `CHANGELOG.md` file for issues needing to be addressed and recent change
 
 To begin working with the Jupyter Notebook from this repository, simply click on the `launch Binder` icon below to create a virtual JupyterLab environment in your web browser. This will copy the repository code to Binder (https://mybinder.org/). Then you can return to this README file within Binder or wherever you are reading this for further instruction.
 
-[![MyBinder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kuhlaid/dv-api-test/HEAD)
-
-Once you have JupyterLab running in MyBinder make a copy of the `_config_dataverseTest.example.json` file and and rename the copy `_config_dataverseTest.json`. The `_config_dataverseTest.json` will be your working copy of the Notebook configuration. [You only need to do this once]
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kuhlaid/dv-api-test/HEAD?urlpath=%2Fdoc%2Ftree%2FdataverseTest.ipynb)
 
 ## Who is the audience?
 
@@ -38,36 +36,40 @@ Another option is to use Docker by running a container with the following comman
 
 I purposely do not embed the bulk of the Python code used for this Notebook, within the Notebook itself. For a heavily coded Notebook this simply makes the Notebook bulky and difficult to read. Also, separating the Notebook configuration from the Notebook allows you to keep your configuration secrets (such as API tokens) OUT OF your GitHub repository; *NEVER save your API tokens or secrets to your Notebook or within any file in your repository.*
 
-The only file you are required to edit for the Notebook is the `_config_dataverseTest.json` file. The `_config_dataverseTest.json` file contains the settings of the Notebook and specifies which Dataverse you are using, the files you wish to upload to the Dataverse, and settings to use for your Dataverse collection and dataset. You will need edit by right-clicking on the file within JupyterLab and choosing `Open With/Editor`. A JSON file is simply formatted text that scripts such as Python are able to treat as objects with properties and is the suggested method of storing Notebook configurations (see https://en.wikipedia.org/wiki/JSON).
+The Notebook configuration settings are stored within one JSON file. When you run the first block of code in the Jupyter Notebook, the `example._config_dataverseTest.json` contents will be copied to a `_config_dataverseTest.json` file (henceforth referred to as the _config file). The _config file is the only file you are required to edit. The _config file contains the settings of the Notebook and specifies which Dataverse you are using, the files you wish to upload to the Dataverse, and settings to use for your Dataverse collection and dataset. We use a JSON file for the configuration because it is formatted text. JSON can be treated as an object containing properties that scripts such as Python are able to easily manipulate and is the suggested method of storing Notebook configurations (see https://en.wikipedia.org/wiki/JSON).
 
-The config file contains three properties `strDvApi_DOMAIN, strDvApi_PARENT_COLLECTION, and strDvApi_TOKEN` (example shown below) that define the Dataverse you wish to use and your token to connect to it. For the purposes of testing I suggest using the `https://demo.dataverse.org/` domain and the `root` parent collection with that domain. So if you are keeping these settings the same then you will only need to create a token and paste it into the configuration where it says `[Paste your Dataverse Token/Key here]`. You can likely find your token for the demo Dataverse at https://demo.dataverse.org/dataverseuser.xhtml?selectTab=apiTokenTab.
+**NOTE: Property names within the _config file beginning with a `_cc__` prefix are constant configuration variables. Renaming these properties will cause some code to break so only modify the values of these properties.**
+
+When you run the first code block of the Jupyter Notebook, you will be prompted to enter the Dataverse API token and Dataverse domain to use with the Notebook. These settings will be saved to the _config file and the code will automatically check to see that the API settings are correct. **NOTE: As of this writing, the `https://demo.dataverse.org` is not allowing Collections to be created via the API (I'm not sure why).**
+
+The config file contains three properties `_cc__strDvApi_DOMAIN, _cc__strDvApi_PARENT_COLLECTION, and _cc__strDvApi_TOKEN` (example shown below) that define the Dataverse you wish to use and your token to connect to it. For the purposes of testing I suggest using the `https://demo.dataverse.org/` domain and the `root` parent collection with that domain. So if you are keeping these settings the same then you will only need to create a token and paste it into the configuration where it says `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. You can likely find your token for the demo Dataverse at https://demo.dataverse.org/dataverseuser.xhtml?selectTab=apiTokenTab.
 
 ```
-  "strDvApi_DOMAIN": "https://demo.dataverse.org/",
-  "strDvApi_PARENT_COLLECTION": "root",
-  "strDvApi_TOKEN": "[Paste your Dataverse Token/Key here]",
+  "_cc__strDvApi_DOMAIN": "https://demo.dataverse.org/",
+  "_cc__strDvApi_PARENT_COLLECTION": "root",
+  "_cc__strDvApi_TOKEN": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 ```
 
 **NOTE: The `_config` file is meant to be modified so feel free to add additional properties as needed. However do not rename existing property names unless you know they are not being used by the `_worker` or other scripts, or the code might throwing errors. For example you could copy the `lstTEST_FILES` array, rename it `lst_FILES` and change the filenames within the list, then upload these files (after you have created them) using `objWorker.uploadTestFiles("lst_FILES")` command in the Notebook.**
 
 Below is an explanation of some key variables found in the configuration file.
 
-- `strDvApi_DOMAIN` the Dataverse domain you are using
+- `_cc__strDvApi_DOMAIN` the Dataverse domain you are using
 - `strDvApi_NAME` name you want to provide for your Dataverse 
-- `strDvApi_PARENT_COLLECTION` the Dataverse collection alias your Dataverse will be stored under
-- `strDvApi_TOKEN` your Dataverse API token
+- `_cc__strDvApi_PARENT_COLLECTION` the Dataverse collection alias your Dataverse will be stored under
+- `_cc__strDvApi_TOKEN` your Dataverse API token
 - `objDvApi_COLLECTION_START` the properties you will use to initialize your Dataverse
 - `objDvApi_DATASET_INIT` - you can use this object to initialize a dataset and contains most of the default metadata fields **note: we intentionally leave the `datasetVersion` element out of the metadata so we can use the same metadata for both the creation of the dataset and update**
 - `objDvApi_DATASET_INIT_PART` - this is another dataset initialization object
 - `objDvApi_DATASET_UPDATE` - this is another dataset initialization object that we can use to update the dataset metadata
-- `strWORKING_DIR` defines the internal working path of the Notebook but if you are using My Binder to test then you will not need to change this setting
-- `strLOCAL_UPLOAD_DIR` the name of the folder generated by the Notebook for creating files to send to the Dataverse API
-- `blnSHOW_DEBUG_STATEMENTS` a boolean flag (0="do not show debug statements in the Notebook", 1="show debug statements within the Notebook output")
-- `blnSHOW_CURL_COMMANDS` a boolean flag (0="do not show CURL statements in the Notebook", 1="show CURL statements within the Notebook output")
+- `_cc__strWORKING_DIR` defines the internal working path of the Notebook but if you are using My Binder to test then you will not need to change this setting
+- `_cc__strLOCAL_UPLOAD_DIR` the name of the folder generated by the Notebook for creating files to send to the Dataverse API
+- `_cc__blnSHOW_DEBUG_STATEMENTS` a boolean flag (0="do not show debug statements in the Notebook", 1="show debug statements within the Notebook output")
+- `_cc__blnSHOW_CURL_COMMANDS` a boolean flag (0="do not show CURL statements in the Notebook", 1="show CURL statements within the Notebook output")
 - `lstTEST_FILES` a list of test files to generate for the API tests
 - `lstTEST_FILES2` a second set of test files to generate for the API tests
 
-Another file you will notice once you create a dataset within the Dataverse is a `dvDatasetMetadata.json` file. This file is generated by the Notebook to keep track of the dataset you are working with. If you delete it then the Notebook will no longer be able to track the dataset (for adding or updating files for example).
+Another file you will notice once you create a dataset within the Dataverse is a `_cc__DvDatasetMetadata.json` file. This file is generated by the Notebook to keep track of the dataset you are working with. If you delete it then the Notebook will no longer be able to track the dataset (for adding or updating files for example).
 
 ## Where is the Python code
 
@@ -131,7 +133,7 @@ When you publish a dataset draft you have the option to specify whether the publ
 
 ### objWorker.createEmptyDatasetDraft()
 
-This method does not take any arguments and will empty the draft dataset defined in `dvDatasetMetadata.json`. You should use this anytime you are updating a Dataset with new files. This will clean out any existing files and allow you to upload a completely new set of files as a new version of the Dataset (whether the files are named differently from the previous files does not matter). 
+This method does not take any arguments and will empty the draft dataset defined in `_cc__DvDatasetMetadata.json`. You should use the `createEmptyDatasetDraft` method anytime you are updating a Dataset with new files. This will clean out any existing files and allow you to upload a completely new set of files as a new version of the Dataset (whether the files are named differently from the previous files does not matter). 
 
 The Dataverse will not allow you to upload a file that currently exists in the dataset with the same MD5 checksum (same content), however you can replace the metadata for the file. **It is best practice to run this method anytime you wish to update the Dataset with new files.**
 
@@ -141,11 +143,11 @@ As some background, this method was created to resolve the problem of some types
 
 ### objWorker.viewDatasetFiles([string version type - e.g. `:draft`])
 
-This method queries the Dataverse for the information on files currently residing in a Dataset referenced in `dvDatasetMetadata.json`. You can pass this method the version of the Dataset you are curious about (which will likely be `:draft` in most cases).
+This method queries the Dataverse for the information on files currently residing in a Dataset referenced in `_cc__DvDatasetMetadata.json`. You can pass this method the version of the Dataset you are curious about (which will likely be `:draft` in most cases).
 
 ### objWorker.deleteDataset()
 
-Will delete the dataset draft defined in `dvDatasetMetadata.json`. This will not delete published Dataset versions (since that is not possible).
+Will delete the dataset draft defined in `_cc__DvDatasetMetadata.json`. This will not delete published Dataset versions (since that is not possible).
 
 ### objWorker.deleteCollection([name of config object - e.g. `objDvApi_COLLECTION_START`])
 

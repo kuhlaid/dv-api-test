@@ -1,10 +1,12 @@
 {
   "strAboutThisConfiguration": "This configuration is used against the demo Dataverse (https://demo.dataverse.org).",
-  "strWORKING_DIR": "",
-  "strLOCAL_UPLOAD_DIR": "uploads",
-  "strDvApi_DOMAIN": "https://demo.dataverse.org",
-  "strDvApi_PARENT_COLLECTION": "root",
-  "strDvApi_TOKEN": "[Paste your Dataverse Token/Key here]",
+  "_cc__strWORKING_DIR": "",
+  "_cc__strLOCAL_UPLOAD_DIR": "uploads",
+  "_cc__strDvApi_DOMAIN": "https://demo.dataverse.org",
+  "_cc__strDvApi_PARENT_COLLECTION": "root",
+  "_cc__strDvApi_TOKEN": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+  "_cc__blnSHOW_DEBUG_STATEMENTS": 1,
+  "_cc__blnSHOW_CURL_COMMANDS": 0,
   "objDvApi_COLLECTION_START": {
     "name": "dv-api-test-Collection",
     "alias": "dv-api-test-Collection",
@@ -20,8 +22,6 @@
     "description": "Just a testing data repository",
     "dataverseType": "RESEARCH_PROJECTS"
   },
-  "blnSHOW_DEBUG_STATEMENTS": 1,
-  "blnSHOW_CURL_COMMANDS": 0,
   "objMyZipFile": {
       "strFileName": "sampleZip.2025-03-10.zip",
       "files":[
