@@ -44,7 +44,7 @@ class ConfigCheck:
             f = open (strConfigFile, "r") # read the notebook configuration settings
             self._config = json.loads(f.read())
             f.close()
-            ClearOutput("Installs completed")
+            ClearOutput("The Notebook has finished installing required modules")
         self.checkDataverseToken()
 
 
@@ -428,9 +428,13 @@ class Worker:
         '''
         Read the basic dataset identity metadata.
         '''
-        f = open(self.objDatasetMetaPath, "r")
-        self.objDatasetMeta = json.loads(f.read())
-        f.close()
+        isExisting = os.path.isfile(self.objDatasetMetaPath)  # check if dataset description file exists
+        if (isExisting):
+            f = open(self.objDatasetMetaPath, "r")
+            self.objDatasetMeta = json.loads(f.read())
+            f.close()
+        else:
+            print("Run the createDataset() method first so the Notebook has the dataset details to work with.")
     
 
     def uploadFiles(self, strTestList):
