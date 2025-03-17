@@ -8,6 +8,12 @@ If we want to run a local instance of JupyterLab https://jupyter.org/, and have 
 
 Most recent version of Python v3.x or greater.
 
+## Cloning the repo
+
+It is recommended (if you are using a Windows environment) to clone the repo using the following command to ensure the EOL characters are set to LF:
+
+`git clone --config core.autocrlf=false https://github.com/kuhlaid/dv-api-test`
+
 ## Setting up the JupyterLab environment
 
 In a shell terminal run the following:

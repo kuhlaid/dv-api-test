@@ -41,9 +41,7 @@ class ConfigCheck:
             shutil.copyfile("example._config_dataverseTest.json", strConfigFile)# create a copy of the existing config file
             blnConfigExisting = self.blnConfigExisting(strConfigFile)
         if (blnConfigExisting): # check again for the config file
-            f = open (strConfigFile, "r") # read the notebook configuration settings
-            self._config = json.loads(f.read())
-            f.close()
+            self._config = self.validJson(strConfigFile, True)
             ClearOutput("The Notebook has finished installing required modules")
         self.checkDataverseToken()
 
@@ -104,9 +102,7 @@ class Worker:
          ----------
          strConfigFile : string ("_config_dataverseTest.json" the filename we gave the Notebook configuration)
         '''
-        f = open (strConfigFile, "r") # read the notebook configuration settings
-        self._config = json.loads(f.read())
-        f.close()
+        self._config = self.validJson(strConfigFile, True)  # read the notebook configuration settings and check for a valid JSON configuration file
         self.eventLogger()
         self.ObjDvApi = ObjDvApi(self._config) # here we pass our notebook configuration to the ObjDvApi module and extend the functionality of this object with the ObjDvApi object
         self.resetUploadPath()
@@ -430,9 +426,7 @@ class Worker:
         '''
         isExisting = os.path.isfile(self.objDatasetMetaPath)  # check if dataset description file exists
         if (isExisting):
-            f = open(self.objDatasetMetaPath, "r")
-            self.objDatasetMeta = json.loads(f.read())
-            f.close()
+            self.objDatasetMeta = self.validJson(self.objDatasetMetaPath, True)
         else:
             print("Run the createDataset() method first so the Notebook has the dataset details to work with.")
     
@@ -513,4 +507,23 @@ class Worker:
                 print("remove",objFile["filename"])
                 self.ObjDvApi.removeFile(objFile["id"])
         self.logger.info("end createEmptyDatasetDraft")
+
+
+    def validJson(self, strFilePath, blnReturn=False):
+        '''
+        Ensure we are working with a valid JSON file or our JSON file has not corrupted.
+
+         Parameters
+         ----------
+         strFilePath : string (path to the file)
+         blnReturn : boolean (whether we want to return the JSON object after validation passes)
+        '''
+        f = open(strFilePath, "r")
+        try:
+            objJson = json.loads(f.read()) # put JSON-data to a variable
+            f.close()
+            if blnReturn:
+                return objJson
+        except json.decoder.JSONDecodeError:
+            raise RuntimeError("***ERROR: Invalid JSON for "+strFilePath+"***")
                 
