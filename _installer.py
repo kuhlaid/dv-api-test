@@ -11,3 +11,4 @@ print("Installing the Notebook modules====>")
 install("Faker")    # this simply allows us to create fake data for our test files
 install("pandas")   # lets us review dataset files easier
 install("git+https://github.com/kuhlaid/DvApiMod5.13")  # this will install our custom Dataverse API Python plugin
+install("ipywidgets")

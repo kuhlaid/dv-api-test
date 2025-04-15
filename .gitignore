@@ -1,6 +1,7 @@
-_config_dataverseTest.json
+_config.json
 _config_DvApi.json
 .ipynb_checkpoints/
 __pycache__/
 uploads/
 _cc__DvDatasetMetadata.json
+.venv

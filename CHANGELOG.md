@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.0.5] - 2025-04-15
+
+- [x] Moved Makefile to root since we need the Python venv at the root directory
+- [x] Added venv activation commands to the Makefile
+- [x] Renaming files so it does not seem that we are only testing the Dataverse API
+
 ## [v1.0.4] - 2025-03-17
 
 - [x] changing the worker script to use a `validJson` method to load json files
