@@ -6,9 +6,9 @@ See the `CHANGELOG.md` file for issues needing to be addressed and recent change
 
 ## Get started
 
-To begin working with the Jupyter Notebook from this repository, simply click on the `launch Binder` icon below to create a virtual JupyterLab environment in your web browser. This will copy the repository code to Binder (https://mybinder.org/). Then you can return to this README file within Binder or wherever you are reading this for further instruction.
+To begin working with the Jupyter Notebook from this repository, simply click on the `launch Binder` icon below. This will create a virtual JupyterLab environment in your web browser and will copy the repository code to Binder (https://mybinder.org/). Then you can return to this README file within Binder or wherever you are reading this for further instruction.
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kuhlaid/dv-api-test/HEAD?urlpath=%2Fdoc%2Ftree%2FdataverseTest.ipynb)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/kuhlaid/dv-api-test/HEAD?urlpath=%2Fdoc%2Ftree%2Fnotebook.ipynb)
 
 ## Who is the audience?
 
@@ -16,23 +16,55 @@ Those who might want to use this code/Notebook are researchers or data curators 
 
 ## Why is this code/resource useful?
 
-This resource was created to help simplify the use of the Dataverse API and also provide you with processes that you likely would not learn about unless you worked with the API extensively. The Dataverse API allows you to automate many of the processes that should not be performed manually if you are more than a one time user of the Dataverse. Having reproducible curation steps that can be automated can greatly increase the efficiency and quality assurance for your data curation. Also, the Dataverse API can be tricky to learn and the documentation can be confusing. On top of this, unless you are an applications analyst, the API documentation can be confusing and knowing which API to use or what development environment you should use can seem out of reach for the general public.
+This resource was created to help simplify the use of the Dataverse API and also provide you with processes that you likely would not learn about unless you worked with the API extensively. The Dataverse API allows you to automate many of the processes that should not be performed manually if you are more than a one time user of the Dataverse. Having reproducible automationed curation steps can greatly increase the efficiency and quality assurance for your data curation. Also, the Dataverse API can be tricky to learn and the documentation can be confusing. On top of this, unless you are an applications analyst, the API documentation can be confusing and knowing which API to use or what development environment you should use can seem out of reach for the general public.
 
 ## What is included in this code repository?
 
-A Jupyter Notebook `dataverseTest.ipynb` is provided along with the code and instructions to work with the Notebook.
+A Jupyter Notebook `notebook.ipynb` is provided along with the code and instructions to work with the Notebook.
 
-## Using the Notebook
+# Using the Notebook
 
-### Setting up JupyterLab
+## Basic JupyterLab
 
-I suggest loading this repository code into https://mybinder.org/ using the link at the top of this document; as of March 2025, MyBinder.org is a free JupyterLab service. *Note: As of this writing, Google Colab DOES NOT support the advanced configuration of this repository, so Colab is not an environment you can use wit this code.*
+I suggest loading this repository code into https://mybinder.org/ using the link at the top of this document; as of March 2025, MyBinder.org is a free JupyterLab service. MyBinder.org is useful for learning how to work with Jupyter Notebooks, but is not ideal for any serious data curation. *Note: As of this writing, Google Colab DOES NOT support the advanced configuration of this repository, so Colab is not an environment you can use with this code.*
 
-For those wanting to run JupyterLab locally (due to the sensitivity of the data you are working with or some other reason) you can use the instructions within the `localJupyterLab` folder. 
+## Preferred JupyterLab set up
+
+This is only for more advanced use cases or where MyBinder does not work for you or you simply want to use JupyterLab while offline.
+ 
+If we want to run a local instance of JupyterLab https://jupyter.org/, and have Python installed on our computer, we can create a virtual environment using the commands below. *Note: the virtual environment will consume ~190Mb of storage as of this writing. You can remove the `.venv` folder to regain that storage space once you are finished with it since you can always rebuild it later. A `.ipynb_checkpoints` folder will be automatically created if you run or edit a Notebook file within JupyterLab.*
+
+### Requirements
+
+- [ ] Most recent version of Python v3.x or greater (see https://www.python.org/downloads/).
+- [ ] Most recent version of Git (see https://git-scm.com/downloads).
+- (optional) A tool such as VSCode for working with Git (see https://code.visualstudio.com/download).
+
+### Cloning the repo
+
+It is recommended (if you are using a Windows environment) to clone this repository using the following command to ensure the EOL characters are set to LF:
+
+`git clone --config core.autocrlf=false https://github.com/kuhlaid/dv-api-test`
+
+### Setting up the JupyterLab environment
+
+In a shell terminal run the following:
+
+```shell
+# Bash commands
+$ cd "/mnt/c/Users/pgale/LocalDev/dv-api-test"   # change this to your local copy of the `localJupyterLab` directory
+$ make venvSetup  # this runs the commands found in the `venvSetup` step of the  Makefile (assuming Python 3.x installed) to create a virtual environment directory, .venv (if not already); venv is included in Python 3.3>; this will install the modules from the requirements.txt file and can take at least several minutes to run as components are installed
+$ make runJLab    # run JupyterLab; this saves us the step of needing to activate and deactivate the virtual environment
+$ # to stop JupyterLab you can use `Ctrl+C` on the keyboard
+```
+
+Once you have run the `make runJLab` command then check the command line for a link to start JupyterLab in your web browser (the link will look like http://127.0.0.1:8888/lab?token=xxx).
+
+## Alternate JupyterLab set up using Docker
 
 Another option is to use Docker by running a container with the following command `docker run -it --name myDataverseApiTest --mount type=bind,source="$(pwd)",target="/home/jovyan/work" --add-host=host.docker.internal:host-gateway -p 10000:8888 quay.io/jupyter/scipy-Notebook:latest`; this allows you to keep your data files locally on your computer but you need to run this command from a location where you data files are located AND this repository code needs to be in that same location/directory tree (which is not always optimal). Anyway, I'm not here to tell you which environment you have to use, but just providing some options I have worked with.
 
-### Understanding the files used with the Notebook
+## Understanding the files used with the Notebook
 
 I purposely do not embed the bulk of the Python code used for this Notebook, within the Notebook itself. For a heavily coded Notebook this simply makes the Notebook bulky and difficult to read. Also, separating the Notebook configuration from the Notebook allows you to keep your configuration secrets (such as API tokens) OUT OF your GitHub repository; *NEVER save your API tokens or secrets to your Notebook or within any file in your repository.*
 
@@ -40,13 +72,15 @@ The Notebook configuration settings are stored within one JSON file. When you ru
 
 **NOTE: Property names within the _config file beginning with a `_cc__` prefix are constant configuration variables. Renaming these properties will cause some code to break so only modify the values of these properties.**
 
-When you run the first code block of the Jupyter Notebook, you will be prompted to enter the Dataverse API token and Dataverse domain to use with the Notebook. These settings will be saved to the _config file and the code will automatically check to see that the API settings are correct. **NOTE: As of this writing, the `https://demo.dataverse.org` is not allowing Collections to be created via the API (I'm not sure why).**
+When you run the first code block of the Jupyter Notebook, you will be prompted to enter the Dataverse API token and Dataverse domain to use with the Notebook. These settings will be saved to the _config file and the code will automatically check to see that the API settings are correct.
 
-The config file contains three properties `_cc__strDvApi_DOMAIN, _cc__strDvApi_PARENT_COLLECTION, and _cc__strDvApi_TOKEN` (example shown below) that define the Dataverse you wish to use and your token to connect to it. For the purposes of testing I suggest using the `https://demo.dataverse.org/` domain and the `root` parent collection with that domain. So if you are keeping these settings the same then you will only need to create a token and paste it into the configuration where it says `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. You can likely find your token for the demo Dataverse at https://demo.dataverse.org/dataverseuser.xhtml?selectTab=apiTokenTab.
+The config file contains three properties `_cc__strDvApi_DOMAIN, _cc__strDvApi_PARENT_COLLECTION, and _cc__strDvApi_TOKEN` (example shown below) that define the Dataverse you wish to use and your token to connect to it. For the purposes of testing I suggest using the `https://demo.dataverse.org` domain and the `:root` parent collection with that domain (*Note the colon in `:root` is important for creating collections*). So if you are keeping these settings the same then you will only need to create a token and paste it into the configuration where it says `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. You can likely find your token for the demo Dataverse at https://demo.dataverse.org/dataverseuser.xhtml?selectTab=apiTokenTab.
+
+**NOTE: When running the Notebook, the first code block will ask you for your Dataverse API token, so you do not need to manaually update the `_config.json` file as the Notebook will do that for you.**
 
 ```
-  "_cc__strDvApi_DOMAIN": "https://demo.dataverse.org/",
-  "_cc__strDvApi_PARENT_COLLECTION": "root",
+  "_cc__strDvApi_DOMAIN": "https://demo.dataverse.org",
+  "_cc__strDvApi_PARENT_COLLECTION": ":root",
   "_cc__strDvApi_TOKEN": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
 ```
 
@@ -69,19 +103,19 @@ Below is an explanation of some key variables found in the configuration file.
 - `lstTEST_FILES` a list of test files to generate for the API tests
 - `lstTEST_FILES2` a second set of test files to generate for the API tests
 
-Another file you will notice once you create a dataset within the Dataverse is a `_cc__DvDatasetMetadata.json` file. This file is generated by the Notebook to keep track of the dataset you are working with. If you delete it then the Notebook will no longer be able to track the dataset (for adding or updating files for example).
+Another file you will notice once you create a Dataverse dataset, is a `_cc__DvDatasetMetadata.json` file. This file is generated by the Notebook to keep track of the dataset you are working with. If you delete it then the Notebook will no longer be able to track the dataset (for adding or updating files for example).
 
 ## Where is the Python code
 
 The Notebook in this repository purposely does not contain the bulk of the Python code used to run it. Instead the Python is split into ancillary files `_installer` and `_worker` with `_worker` carrying the bulk of the Python code. Also the code uses the plugin from https://github.com/kuhlaid/DvApiMod5.13 (there is no need to look at this unless you want to know the gory details of how it works or wish to extend it). A heavily coded Notebook simply makes the Notebook bulky and difficult to read. Also, separating the Notebook configuration from the Notebook allows you to keep your configuration secrets (such as API tokens) OUT OF your GitHub repository; *NEVER save your API tokens or secrets to your Notebook or within any file in your repository.*
 
-## About the Notebook code (getting technical, if you are so inclined)
+# About the Notebook code (getting technical, if you are so inclined)
 
 The code blocks in the Notebook are intentionally brief because most users are not concerned with what the code looks like (at least initially). If you want to know what the scripts do then review the .py files that we import into the Notebook. However we will briefly describe a line of code so you have a general idea of what is happening behind the scenes.
 
 The `objWorker.ObjDvApi.DvCreateCollection()` command for example, runs the `DvCreateCollection()` method, which is found in the `ObjDvApi` object, and makes a Dataverse API request to create a new repository/collection. The `ObjDvApi` is defined in an external Python file which contains reusable methods for working with the Dataverse API (see https://github.com/kuhlaid/DvApiMod5.13). We use this same class for all of our datasets, so keeping the methods in a single file for reuse is better than manually adding into the code of each of our datasets and making our working code script more densely worded than it needs to be.
 
-### The objWorker
+## The objWorker
 
 The `objWorker` is the object that we customize for each dataset and simply acts as a template for importing different classes/objects we want to attach to it. For instance, we attach the `ObjDvApi` to our `objWorker` object so whatever functionality exists in the `ObjDvApi` class can be used in our `objWorker` class. The `.` between `objWorker.ObjDvApi` simply represents that `ObjDvApi` is an extension of `objWorker`. An analogy would be adding a dustpan to a broom (or `broom.dustpan`) to extend the functionality of the broom, so the broom can now be used to pick up dust and not simply push it around.
 

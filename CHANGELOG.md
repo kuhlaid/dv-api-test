@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] Moved Makefile to root since we need the Python venv at the root directory
 - [x] Added venv activation commands to the Makefile
 - [x] Renaming files so it does not seem that we are only testing the Dataverse API
+- [x] Removing the `localJupyterLab` directory
 
 ## [v1.0.4] - 2025-03-17
 
