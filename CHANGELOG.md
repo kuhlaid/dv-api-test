@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [x] removing the _installer.py script in favor of installing using a requirements.txt file
 - [x] fixing Makefile commands to use the virtual environment
 - [x] trying to fix issue with corrupt zip files being created (text files with zip extension)
+- [x] publishing the DvApiMod5.13 module and updating the requirements.txt file
 
 ## [v1.0.5] - 2025-04-15
 

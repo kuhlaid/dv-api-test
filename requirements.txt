@@ -2,4 +2,4 @@ Faker           # this simply allows us to create fake data for our test files
 ipywidgets      # this is for displaying form input for our Notebook
 jupyterlab      # this is for running Jupyter Lab
 pandas          # lets us review dataset files easier
-git+https://github.com/kuhlaid/DvApiMod5.13             # simplified Dataverse API module
+DvApiMod5.13    # simplified Dataverse API module (https://github.com/kuhlaid/DvApiMod5.13)
