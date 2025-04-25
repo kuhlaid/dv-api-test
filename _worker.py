@@ -290,12 +290,19 @@ class Worker:
         print("start doubleZip")
         zp=os.path.join(self.strUploadPath,self._config[strZipConfig]["strFileName"]) # zip path
         self.removeTempArchive(zp+".tmpzip")  # remove temp archive
-        with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip1:  # create a placeholder temporary file first
-            pass
-        with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip2:  # double zip the file into a temporary zip
-            myzip2.write(zp,self._config[strZipConfig]["strFileName"]+".zip")
-            time.sleep(0.5) # try to ensure the archive is created before moving on
-            pass
+        try:
+            with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip1:  # create a placeholder temporary file first
+                pass
+            try:
+                with zipfile.PyZipFile(zp+".tmpzip", 'w') as myzip2:  # double zip the file into a temporary zip
+                    myzip2.write(zp,self._config[strZipConfig]["strFileName"]+".zip")
+                    time.sleep(1) # try to ensure the archive is created before moving on
+                    pass
+            except Exception:
+                raise RuntimeError("***ERROR: issue double zipping file***")
+        except Exception:
+            raise RuntimeError("***ERROR: issue creating zip file***")
+        
         shutil.copyfile(zp+".tmpzip", zp+".zip") # finally we copy the double-zipped archive temp file to the main archive
         self.removeTempArchive(zp+".tmpzip") # we remove the temp zip file
         print("end double zip")
@@ -445,7 +452,7 @@ class Worker:
             self.prepFileUpload(objFile)
         self.logger.info("end uploadFiles")
 
-
+        
     def prepFileUpload(self, objFile):
         '''
         Add files to the dataset.

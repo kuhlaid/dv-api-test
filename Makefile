@@ -13,16 +13,19 @@ export VIRTUAL_ENV = $(shell pwd)/$(VENV_DIR)
 # Commands
 # `venvSetup` will first remove an existing venv if it exists and rebuild the environment
 # `runJLab` simply runs jupyter lab
-venvSetup: 
-	rm -rf $(VENV_DIR)
-	$(PYTHON) -m venv $(VENV_DIR)
-	pip install --upgrade pip
-	$(VENV_DIR)/bin/pip install -r requirements.txt
+venvCreate:
+	( \
+		rm -rf $(VENV_DIR); \
+		$(PYTHON) -m venv $(VENV_DIR); \
+		. .venv/bin/activate; \
+		pip install --upgrade pip; \
+		pip install -r requirements.txt; \
+	)
 
 runJLab:
 	( \
        . .venv/bin/activate; \
-       $(VENV_DIR)/bin/jupyter-lab; \
+       jupyter-lab; \
     )
 	
 	
